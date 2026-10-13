@@ -507,7 +507,7 @@ export function createHudOverlayWindow(): BrowserWindow {
 		hasShadow: false,
 		show: false,
 		webPreferences: {
-			preload: path.join(electronWindowsDir, "preload.mjs"),
+			preload: path.join(electronWindowsDir, "preload.cjs"),
 			nodeIntegration: false,
 			contextIsolation: true,
 			webSecurity: false,
@@ -751,7 +751,7 @@ export function createUpdateToastWindow(): BrowserWindow {
 		focusable: true,
 		backgroundColor: "#00000000",
 		webPreferences: {
-			preload: path.join(electronWindowsDir, "preload.mjs"),
+			preload: path.join(electronWindowsDir, "preload.cjs"),
 			nodeIntegration: false,
 			contextIsolation: true,
 			backgroundThrottling: false,
@@ -972,7 +972,7 @@ export function createEditorWindow(): BrowserWindow {
 		show: false,
 		backgroundColor: "#000000",
 		webPreferences: {
-			preload: path.join(electronWindowsDir, "preload.mjs"),
+			preload: path.join(electronWindowsDir, "preload.cjs"),
 			nodeIntegration: false,
 			contextIsolation: true,
 			webSecurity: false,
@@ -1072,7 +1072,7 @@ export function createSourceSelectorWindow(): BrowserWindow {
 		}),
 		backgroundColor: "#00000000",
 		webPreferences: {
-			preload: path.join(electronWindowsDir, "preload.mjs"),
+			preload: path.join(electronWindowsDir, "preload.cjs"),
 			nodeIntegration: false,
 			contextIsolation: true,
 		},
@@ -1119,7 +1119,7 @@ export function createCountdownWindow(): BrowserWindow {
 		focusable: true,
 		show: false,
 		webPreferences: {
-			preload: path.join(electronWindowsDir, "preload.mjs"),
+			preload: path.join(electronWindowsDir, "preload.cjs"),
 			nodeIntegration: false,
 			contextIsolation: true,
 		},

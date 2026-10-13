@@ -124,6 +124,7 @@ function main() {
 		PACKAGED_SMOKE_RELEASE_DIR: "release/gabriel",
 		PACKAGED_SMOKE_PRODUCT_NAME: "recordly-gabriel",
 	});
+	run(process.execPath, ["scripts/smoke-gabriel-mac-ui.mjs", appPath]);
 	console.log(
 		`\nBuild complete. Your app is at:\n${appPath}\n\nTo install it later, drag recordly-gabriel.app into Applications.`,
 	);

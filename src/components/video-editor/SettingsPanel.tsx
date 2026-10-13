@@ -2365,11 +2365,11 @@ export function SettingsPanel({
 					)}
 				</SettingsCategory>
 				<SettingsCategory category="sounds">
-					{whooshVolumeControl}
 					<ZoomSoundEffectsPanel
 						settings={zoomSoundEffects}
 						onChange={(settings) => onZoomSoundEffectsChange?.(settings)}
 						volume={zoomWhooshVolume}
+						onVolumeChange={(volume) => onZoomWhooshVolumeChange?.(volume)}
 					/>
 				</SettingsCategory>
 				<SettingsCategory category="motion">

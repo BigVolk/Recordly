@@ -134,7 +134,7 @@ async function ensureRecordingsDir() {
 // │ │
 // │ ├─┬ dist-electron
 // │ │ ├── main.js
-// │ │ └── preload.mjs
+// │ │ └── preload.cjs
 // │
 process.env.APP_ROOT = path.join(electronMainDir, "..");
 

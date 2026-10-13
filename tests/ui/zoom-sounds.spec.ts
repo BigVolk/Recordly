@@ -58,6 +58,29 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 	await page.keyboard.press("Home");
 	for (let i = 0; i < 11; i++) await page.keyboard.press("ArrowRight");
 	await expect(threshold).toHaveValue("2.2");
+	const volume = page.getByRole("slider", { name: "Whoosh volume" });
+	await volume.focus();
+	await page.keyboard.press("End");
+	const apply = page.getByRole("button", { name: "Apply changes", exact: true });
+	await expect(apply).toBeEnabled();
+	expect(
+		await page.evaluate(
+			() =>
+				JSON.parse(localStorage.getItem("recordly.editor.preferences") || "{}")
+					.zoomSoundEffects.smallZoomIn,
+		),
+	).toBe("dry-short-in");
+	await apply.click();
+	await expect(apply).toBeDisabled();
+	await expect
+		.poll(() =>
+			page.evaluate(
+				() =>
+					JSON.parse(localStorage.getItem("recordly.editor.preferences") || "{}")
+						.zoomWhooshVolume,
+			),
+		)
+		.toBe(1);
 	const saved = {
 		smallZoomIn: "better",
 		smallZoomOut: "none",
@@ -91,6 +114,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 		"Tonal bass",
 	);
 	await expect(threshold).toHaveValue("2.2");
+	await expect(volume).toHaveValue("1");
 	await page.screenshot({ path: "test-results/zoom-sounds.png", animations: "disabled" });
 
 	await page.getByRole("button", { name: "Preview large zoom in sound", exact: true }).click();

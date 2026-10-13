@@ -92,6 +92,18 @@ export default defineConfig(({ mode }) => ({
 							// Shortcut of `build.rollupOptions.input`.
 							// Preload scripts may contain Web assets, so use the `build.rollupOptions.input` instead `build.lib.entry`.
 							input: path.join(__dirname, "electron/preload.ts"),
+							vite: {
+								build: {
+									rollupOptions: {
+										output: {
+											format: "cjs",
+											inlineDynamicImports: true,
+											entryFileNames: "preload.cjs",
+											chunkFileNames: "preload-[name].cjs",
+										},
+									},
+								},
+							},
 						},
 						// Polyfill the Electron and Node.js API for the renderer process.
 						// If you want to use Node.js in the renderer process, enable `nodeIntegration` in the main process.

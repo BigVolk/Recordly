@@ -29,7 +29,7 @@ function auditionVolume(volume: number) {
 	return Number.isFinite(volume) && volume > 0 ? Math.min(1, volume) : DEFAULT_ZOOM_WHOOSH_VOLUME;
 }
 
-export function ZoomSoundEffectsPanel({
+function ZoomSoundEffectsEditor({
 	settings,
 	onChange,
 	volume,
@@ -193,5 +193,63 @@ export function ZoomSoundEffectsPanel({
 				</p>
 			</div>
 		</section>
+	);
+}
+
+export function ZoomSoundEffectsPanel({
+	settings,
+	onChange,
+	volume,
+	onVolumeChange,
+}: {
+	settings: ZoomSoundEffects;
+	onChange: (settings: ZoomSoundEffects) => void;
+	volume: number;
+	onVolumeChange: (volume: number) => void;
+}) {
+	const t = useScopedT("settings");
+	const [draft, setDraft] = useState(() => ({ ...settings }));
+	const [draftVolume, setDraftVolume] = useState(volume);
+	useEffect(() => {
+		setDraft({ ...settings });
+		setDraftVolume(volume);
+	}, [settings, volume]);
+	const hasChanges =
+		draftVolume !== volume ||
+		(Object.keys(settings) as (keyof ZoomSoundEffects)[]).some(
+			(key) => draft[key] !== settings[key],
+		);
+	return (
+		<div className="flex flex-col gap-5">
+			<div className="flex flex-col gap-2">
+				<Button
+					disabled={!hasChanges}
+					onClick={() => {
+						onChange({ ...draft });
+						onVolumeChange(draftVolume);
+					}}
+				>
+					{t("audio.applyChanges", "Apply changes")}
+				</Button>
+				<p role="status" className="text-xs text-muted-foreground">
+					{hasChanges
+						? t(
+								"audio.unappliedChanges",
+								"Unapplied changes. Apply to update playback and exports.",
+							)
+						: t("audio.changesApplied", "Your sound settings are applied.")}
+				</p>
+			</div>
+			<SliderControl
+				label={t("audio.whooshVolume", "Whoosh volume")}
+				value={draftVolume}
+				min={0}
+				max={1}
+				step={0.01}
+				onChange={setDraftVolume}
+				formatValue={(value) => `${Math.round(value * 100)}%`}
+			/>
+			<ZoomSoundEffectsEditor settings={draft} onChange={setDraft} volume={draftVolume} />
+		</div>
 	);
 }
