@@ -135,9 +135,9 @@ export class OfflineAudioProcessor extends AudioMediaProcessor {
 			if (!regionBuffers.has(region.audioPath)) {
 				regionBuffers.set(
 					region.audioPath,
-					// Bundled whooshes are short files served as static assets. Decode them
+					// Bundled sound effects are short files served as static assets. Decode them
 					// directly: the streaming demuxer requires byte ranges for raw FLAC.
-					region.id.startsWith("zoom-whoosh:")
+					region.id.startsWith("zoom-whoosh:") || region.id.startsWith("mouse-click:")
 						? await this.bulkDecodeFromUrl(region.audioPath, OFFLINE_AUDIO_SAMPLE_RATE)
 						: await this.decodeAudioFromUrl(region.audioPath),
 				);

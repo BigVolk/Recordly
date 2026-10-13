@@ -111,6 +111,11 @@ try {
 	const volume = page.getByRole("slider", { name: "Whoosh volume", exact: true });
 	await volume.focus();
 	await page.keyboard.press("End");
+	const clickVolume = page.getByRole("slider", { name: "Mouse click volume", exact: true });
+	await clickVolume.focus();
+	await page.keyboard.press("Home");
+	for (let i = 0; i < 60; i++) await page.keyboard.press("ArrowRight");
+	await expect(volume).toHaveValue("1");
 	await apply.click();
 	await expect
 		.poll(() =>
@@ -128,6 +133,36 @@ try {
 		),
 		1,
 	);
+	assert.equal(
+		await page.evaluate(
+			() => window.electronAPI.getAppSetting("recordly.editor.preferences")?.mouseClickVolume,
+		),
+		0.6,
+	);
+	await page.evaluate(() => {
+		const play = HTMLMediaElement.prototype.play;
+		HTMLMediaElement.prototype.play = function () {
+			if (this instanceof HTMLAudioElement) window.smokeClickAudio = this;
+			return play.call(this);
+		};
+	});
+	await page.getByRole("button", { name: "Preview mouse click sound", exact: true }).click();
+	await expect
+		.poll(() => page.evaluate(() => window.smokeClickAudio?.readyState))
+		.toBeGreaterThanOrEqual(2);
+	assert.equal(await page.evaluate(() => window.smokeClickAudio.volume), 0.6);
+	assert.equal(
+		await page.evaluate(async () => {
+			const response = await fetch(window.smokeClickAudio.src);
+			const context = new AudioContext();
+			try {
+				return (await context.decodeAudioData(await response.arrayBuffer())).duration;
+			} finally {
+				await context.close();
+			}
+		}),
+		0.1,
+	);
 	await page.evaluate(() => document.fonts.ready);
 	const style = await page.evaluate(() => ({
 		font: getComputedStyle(document.body).fontFamily,
@@ -143,7 +178,7 @@ try {
 	assert.deepEqual(errors, []);
 	await page.screenshot({ path: path.join(root, ".tmp/gabriel-packaged-ui.png") });
 	console.log(
-		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, Apply, and saved settings.",
+		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, independent click/whoosh volumes, click audio, Apply, and saved settings.",
 	);
 } finally {
 	if (browser) await browser.close().catch(() => {});

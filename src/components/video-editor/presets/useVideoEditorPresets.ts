@@ -33,6 +33,7 @@ export function useVideoEditorPresets({
 			zoomMotionBlur: appearance.zoomMotionBlur,
 			zoomMotionBlurTuning: { ...appearance.zoomMotionBlurTuning },
 			zoomWhooshVolume: appearance.zoomWhooshVolume,
+			mouseClickVolume: appearance.mouseClickVolume,
 			zoomSoundEffects: appearance.zoomSoundEffects,
 			connectZooms: appearance.connectZooms,
 			zoomInDurationMs: appearance.zoomInDurationMs,
@@ -83,6 +84,7 @@ export function useVideoEditorPresets({
 			appearance.setZoomMotionBlur(snapshot.zoomMotionBlur);
 			appearance.setZoomMotionBlurTuning({ ...snapshot.zoomMotionBlurTuning });
 			appearance.setZoomWhooshVolume(snapshot.zoomWhooshVolume);
+			appearance.setMouseClickVolume(snapshot.mouseClickVolume);
 			appearance.setZoomSoundEffects({ ...snapshot.zoomSoundEffects });
 			appearance.setConnectZooms(snapshot.connectZooms);
 			appearance.setZoomInDurationMs(snapshot.zoomInDurationMs);

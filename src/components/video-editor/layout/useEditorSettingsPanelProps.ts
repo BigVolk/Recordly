@@ -112,6 +112,8 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		autoApplyFreshRecordingAutoZooms: appearance.autoApplyFreshRecordingAutoZooms,
 		onAutoApplyFreshRecordingAutoZoomsChange: appearance.setAutoApplyFreshRecordingAutoZooms,
 		zoomWhooshVolume: appearance.zoomWhooshVolume,
+		mouseClickVolume: appearance.mouseClickVolume,
+		onMouseClickVolumeChange: appearance.setMouseClickVolume,
 		onZoomWhooshVolumeChange: appearance.setZoomWhooshVolume,
 		zoomSoundEffects: appearance.zoomSoundEffects,
 		onZoomSoundEffectsChange: appearance.setZoomSoundEffects,

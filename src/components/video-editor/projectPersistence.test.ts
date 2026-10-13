@@ -6,6 +6,7 @@ import {
 	undoEditorHistoryStack,
 } from "./editorHistory";
 import {
+	createProjectData,
 	getDefaultBorderRadiusPercent,
 	legacyBorderRadiusPixelsToPercent,
 	normalizeProjectEditor,
@@ -318,6 +319,25 @@ describe("saved zoom sound assignments", () => {
 		} as const;
 		expect(normalizeProjectEditor({ zoomSoundEffects }).zoomSoundEffects).toEqual(
 			zoomSoundEffects,
+		);
+	});
+});
+
+describe("project mouse click volume", () => {
+	it("normalizes old projects, independent mute, and invalid values", () => {
+		expect(normalizeProjectEditor({}).mouseClickVolume).toBe(0.35);
+		const editor = createProjectData("/clip.mp4", {
+			mouseClickVolume: 0,
+			zoomWhooshVolume: 0.8,
+		}).editor;
+		expect(normalizeProjectEditor(editor)).toMatchObject({
+			mouseClickVolume: 0,
+			zoomWhooshVolume: 0.8,
+		});
+		expect(normalizeProjectEditor({ mouseClickVolume: 2 }).mouseClickVolume).toBe(1);
+		expect(normalizeProjectEditor({ mouseClickVolume: -1 }).mouseClickVolume).toBe(0);
+		expect(normalizeProjectEditor({ mouseClickVolume: Number.NaN }).mouseClickVolume).toBe(
+			0.35,
 		);
 	});
 });

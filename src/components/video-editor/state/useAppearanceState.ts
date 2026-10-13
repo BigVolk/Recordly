@@ -23,6 +23,7 @@ import {
 	DEFAULT_ZOOM_OUT_DURATION_MS,
 	DEFAULT_ZOOM_OUT_EASING,
 	DEFAULT_ZOOM_WHOOSH_VOLUME,
+	DEFAULT_MOUSE_CLICK_VOLUME,
 } from "../types";
 
 export function useAppearanceState(preferences: EditorPreferences) {
@@ -35,6 +36,9 @@ export function useAppearanceState(preferences: EditorPreferences) {
 	);
 	const [autoApplyFreshRecordingAutoZooms, setAutoApplyFreshRecordingAutoZooms] = useState(
 		preferences.autoApplyFreshRecordingAutoZooms,
+	);
+	const [mouseClickVolume, setMouseClickVolume] = useState(
+		preferences.mouseClickVolume ?? DEFAULT_MOUSE_CLICK_VOLUME,
 	);
 	const [zoomWhooshVolume, setZoomWhooshVolume] = useState(
 		preferences.zoomWhooshVolume ?? DEFAULT_ZOOM_WHOOSH_VOLUME,
@@ -138,6 +142,8 @@ export function useAppearanceState(preferences: EditorPreferences) {
 		setAutoApplyFreshRecordingAutoZooms,
 		zoomWhooshVolume,
 		setZoomWhooshVolume,
+		mouseClickVolume,
+		setMouseClickVolume,
 		zoomSoundEffects,
 		setZoomSoundEffects,
 		connectZooms,

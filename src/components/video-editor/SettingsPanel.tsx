@@ -86,6 +86,7 @@ import {
 	DEFAULT_ZOOM_IN_DURATION_MS,
 	DEFAULT_ZOOM_OUT_DURATION_MS,
 	DEFAULT_ZOOM_WHOOSH_VOLUME,
+	DEFAULT_MOUSE_CLICK_VOLUME,
 } from "./types";
 import { fromCursorSwaySliderValue, toCursorSwaySliderValue } from "./videoPlayback/cursorSway";
 import { isZeroPadding } from "./videoPlayback/layoutUtils";
@@ -451,6 +452,8 @@ interface SettingsPanelProps {
 	onShadowChange?: (intensity: number) => void;
 	backgroundBlur?: number;
 	onBackgroundBlurChange?: (amount: number) => void;
+	mouseClickVolume?: number;
+	onMouseClickVolumeChange?: (volume: number) => void;
 	zoomWhooshVolume?: number;
 	onZoomWhooshVolumeChange?: (volume: number) => void;
 	zoomSoundEffects?: ZoomSoundEffects;
@@ -914,6 +917,8 @@ export function SettingsPanel({
 	onBackgroundBlurChange,
 	zoomSoundEffects = DEFAULT_ZOOM_SOUND_EFFECTS,
 	onZoomSoundEffectsChange,
+	mouseClickVolume = DEFAULT_MOUSE_CLICK_VOLUME,
+	onMouseClickVolumeChange,
 	zoomWhooshVolume = DEFAULT_ZOOM_WHOOSH_VOLUME,
 	onZoomWhooshVolumeChange,
 	connectZooms = true,
@@ -1436,6 +1441,7 @@ export function SettingsPanel({
 		onZoomOutDurationMsChange?.(initialEditorPreferences.zoomOutDurationMs);
 		onZoomClassicModeChange?.(false);
 		onZoomWhooshVolumeChange?.(initialEditorPreferences.zoomWhooshVolume);
+		onMouseClickVolumeChange?.(initialEditorPreferences.mouseClickVolume);
 	};
 
 	const resetCursorSection = () => {
@@ -2368,6 +2374,8 @@ export function SettingsPanel({
 					<ZoomSoundEffectsPanel
 						settings={zoomSoundEffects}
 						onChange={(settings) => onZoomSoundEffectsChange?.(settings)}
+						mouseClickVolume={mouseClickVolume}
+						onMouseClickVolumeChange={(volume) => onMouseClickVolumeChange?.(volume)}
 						volume={zoomWhooshVolume}
 						onVolumeChange={(volume) => onZoomWhooshVolumeChange?.(volume)}
 					/>

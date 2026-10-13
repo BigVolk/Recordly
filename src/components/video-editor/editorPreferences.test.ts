@@ -266,10 +266,11 @@ describe("editorPreferences", () => {
 		});
 	});
 
-	it("saves a muted whoosh preference and retains it in presets", () => {
+	it("saves separate click and muted whoosh preferences and retains them in presets", () => {
 		vi.stubGlobal("localStorage", createStorageMock());
 		saveEditorPreferences({
 			zoomWhooshVolume: 0,
+			mouseClickVolume: 0.73,
 			zoomSoundEffects: {
 				...DEFAULT_EDITOR_PREFERENCES.zoomSoundEffects,
 				largeZoomOut: "none",
@@ -277,6 +278,7 @@ describe("editorPreferences", () => {
 			},
 		});
 		expect(loadEditorPreferences().zoomWhooshVolume).toBe(0);
+		expect(loadEditorPreferences().mouseClickVolume).toBe(0.73);
 		expect(loadEditorPreferences().zoomSoundEffects.smallZoomIn).toBe("better");
 		expect(loadEditorPreferences().zoomSoundEffects.largeZoomOut).toBe("none");
 		saveEditorPresets([
@@ -288,6 +290,7 @@ describe("editorPreferences", () => {
 				snapshot: {
 					...DEFAULT_EDITOR_PREFERENCES,
 					zoomWhooshVolume: 0,
+					mouseClickVolume: 0.73,
 					zoomSoundEffects: loadEditorPreferences().zoomSoundEffects,
 					cropRegion: DEFAULT_CROP_REGION,
 					autoCaptionSettings: DEFAULT_AUTO_CAPTION_SETTINGS,
@@ -295,6 +298,7 @@ describe("editorPreferences", () => {
 			},
 		]);
 		expect(loadEditorPresets()[0].snapshot.zoomWhooshVolume).toBe(0);
+		expect(loadEditorPresets()[0].snapshot.mouseClickVolume).toBe(0.73);
 		expect(loadEditorPresets()[0].snapshot.zoomSoundEffects.smallZoomIn).toBe("better");
 	});
 

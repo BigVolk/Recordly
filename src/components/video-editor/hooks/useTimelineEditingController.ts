@@ -5,6 +5,7 @@ import type { useI18n } from "@/contexts/I18nContext";
 import type { useShortcuts } from "@/contexts/ShortcutsContext";
 import { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
 import { buildZoomWhooshRegions } from "../audio/zoomWhooshes";
+import { buildMouseClickRegions } from "../audio/mouseClicks";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
@@ -114,9 +115,24 @@ export function useTimelineEditingController(input: Input) {
 			zoomOutDurationMs,
 		],
 	);
+	const mouseClickRegions = useMemo(
+		() =>
+			buildMouseClickRegions(
+				cursor.effectiveCursorTelemetry,
+				timeline.clipRegions,
+				projection.timelineDuration * 1000,
+				input.appearance.mouseClickVolume,
+			),
+		[
+			cursor.effectiveCursorTelemetry,
+			timeline.clipRegions,
+			projection.timelineDuration,
+			input.appearance.mouseClickVolume,
+		],
+	);
 	const playbackAudioRegions = useMemo(
-		() => [...timeline.audioRegions, ...zoomWhooshRegions],
-		[timeline.audioRegions, zoomWhooshRegions],
+		() => [...timeline.audioRegions, ...zoomWhooshRegions, ...mouseClickRegions],
+		[timeline.audioRegions, zoomWhooshRegions, mouseClickRegions],
 	);
 
 	const audio = useVideoEditorAudio({

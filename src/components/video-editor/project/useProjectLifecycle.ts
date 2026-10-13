@@ -134,6 +134,7 @@ export function useProjectLifecycle(input: Input) {
 		appearance.setZoomMotionBlur(editor.zoomMotionBlur);
 		appearance.setZoomMotionBlurTuning({ ...editor.zoomMotionBlurTuning });
 		appearance.setZoomWhooshVolume(editor.zoomWhooshVolume);
+		appearance.setMouseClickVolume(editor.mouseClickVolume);
 		appearance.setZoomSoundEffects({ ...editor.zoomSoundEffects });
 		appearance.setConnectZooms(editor.connectZooms);
 		appearance.setZoomInDurationMs(editor.zoomInDurationMs);

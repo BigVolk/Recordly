@@ -16,6 +16,7 @@ type PersistedEditorControls = Pick<
 	| "zoomMotionBlur"
 	| "zoomMotionBlurTuning"
 	| "zoomWhooshVolume"
+	| "mouseClickVolume"
 	| "zoomSoundEffects"
 	| "connectZooms"
 	| "zoomInDurationMs"
@@ -95,6 +96,7 @@ export const DEFAULT_EDITOR_PREFERENCES: EditorPreferences = {
 	zoomMotionBlur: DEFAULT_EDITOR_CONTROLS.zoomMotionBlur,
 	zoomMotionBlurTuning: DEFAULT_EDITOR_CONTROLS.zoomMotionBlurTuning,
 	zoomWhooshVolume: DEFAULT_EDITOR_CONTROLS.zoomWhooshVolume,
+	mouseClickVolume: DEFAULT_EDITOR_CONTROLS.mouseClickVolume,
 	zoomSoundEffects: DEFAULT_EDITOR_CONTROLS.zoomSoundEffects,
 	connectZooms: DEFAULT_EDITOR_CONTROLS.connectZooms,
 	zoomInDurationMs: DEFAULT_EDITOR_CONTROLS.zoomInDurationMs,
@@ -280,6 +282,7 @@ function normalizeEditorControls(
 		backgroundBlur: sanitizedRaw.backgroundBlur ?? fallback.backgroundBlur,
 		zoomMotionBlur: sanitizedRaw.zoomMotionBlur ?? fallback.zoomMotionBlur,
 		zoomWhooshVolume: sanitizedRaw.zoomWhooshVolume ?? fallback.zoomWhooshVolume,
+		mouseClickVolume: sanitizedRaw.mouseClickVolume ?? fallback.mouseClickVolume,
 		zoomSoundEffects: sanitizedRaw.zoomSoundEffects ?? fallback.zoomSoundEffects,
 		connectZooms: sanitizedRaw.connectZooms ?? fallback.connectZooms,
 		zoomInDurationMs: sanitizedRaw.zoomInDurationMs ?? fallback.zoomInDurationMs,
@@ -339,6 +342,7 @@ function normalizeEditorControls(
 		zoomMotionBlur: normalized.zoomMotionBlur,
 		zoomMotionBlurTuning: normalized.zoomMotionBlurTuning,
 		zoomWhooshVolume: normalized.zoomWhooshVolume,
+		mouseClickVolume: normalized.mouseClickVolume,
 		zoomSoundEffects: normalized.zoomSoundEffects,
 		connectZooms: normalized.connectZooms,
 		zoomInDurationMs: normalized.zoomInDurationMs,

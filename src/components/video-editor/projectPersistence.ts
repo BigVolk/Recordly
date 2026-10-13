@@ -54,6 +54,7 @@ import {
 	DEFAULT_ZOOM_OUT_EASING,
 	DEFAULT_ZOOM_SMOOTHNESS,
 	DEFAULT_ZOOM_WHOOSH_VOLUME,
+	DEFAULT_MOUSE_CLICK_VOLUME,
 	getDefaultCaptionFontFamily,
 	normalizeCursorClickEffectColor,
 	normalizeCursorClickEffectStyle,
@@ -90,6 +91,7 @@ export interface ProjectEditorState {
 	zoomMotionBlur: number;
 	zoomMotionBlurTuning: ZoomMotionBlurTuning;
 	zoomWhooshVolume: number;
+	mouseClickVolume: number;
 	zoomSoundEffects: ZoomSoundEffects;
 	connectZooms: boolean;
 	zoomInDurationMs: number;
@@ -843,6 +845,9 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 		backgroundBlur: normalizedBackgroundBlur,
 		zoomMotionBlur: normalizedZoomMotionBlur,
 		zoomMotionBlurTuning: normalizedZoomMotionBlurTuning,
+		mouseClickVolume: isFiniteNumber(editor.mouseClickVolume)
+			? clamp(editor.mouseClickVolume, 0, 1)
+			: DEFAULT_MOUSE_CLICK_VOLUME,
 		zoomSoundEffects: normalizeZoomSoundEffects(editor.zoomSoundEffects),
 		zoomWhooshVolume: isFiniteNumber(editor.zoomWhooshVolume)
 			? clamp(editor.zoomWhooshVolume, 0, 1)

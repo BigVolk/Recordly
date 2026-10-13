@@ -12,6 +12,7 @@ import { useScopedT } from "@/contexts/I18nContext";
 import { SliderControl } from "../SliderControl";
 import { DEFAULT_ZOOM_WHOOSH_VOLUME } from "../types";
 import { resolveZoomSoundUrl } from "./zoomSoundAssets";
+import { resolveMouseClickSoundUrl } from "./mouseClickSound";
 import {
 	DEFAULT_ZOOM_SOUND_EFFECTS,
 	ZOOM_SOUND_LIBRARY,
@@ -201,20 +202,35 @@ export function ZoomSoundEffectsPanel({
 	onChange,
 	volume,
 	onVolumeChange,
+	mouseClickVolume,
+	onMouseClickVolumeChange,
 }: {
 	settings: ZoomSoundEffects;
 	onChange: (settings: ZoomSoundEffects) => void;
 	volume: number;
 	onVolumeChange: (volume: number) => void;
+	mouseClickVolume: number;
+	onMouseClickVolumeChange: (volume: number) => void;
 }) {
 	const t = useScopedT("settings");
 	const [draft, setDraft] = useState(() => ({ ...settings }));
 	const [draftVolume, setDraftVolume] = useState(volume);
+	const [draftClickVolume, setDraftClickVolume] = useState(mouseClickVolume);
+	const clickAudioRef = useRef<HTMLAudioElement | null>(null);
+	useEffect(
+		() => () => {
+			clickAudioRef.current?.pause();
+			if (clickAudioRef.current) clickAudioRef.current.src = "";
+		},
+		[],
+	);
 	useEffect(() => {
 		setDraft({ ...settings });
 		setDraftVolume(volume);
-	}, [settings, volume]);
+		setDraftClickVolume(mouseClickVolume);
+	}, [settings, volume, mouseClickVolume]);
 	const hasChanges =
+		draftClickVolume !== mouseClickVolume ||
 		draftVolume !== volume ||
 		(Object.keys(settings) as (keyof ZoomSoundEffects)[]).some(
 			(key) => draft[key] !== settings[key],
@@ -227,6 +243,7 @@ export function ZoomSoundEffectsPanel({
 					onClick={() => {
 						onChange({ ...draft });
 						onVolumeChange(draftVolume);
+						onMouseClickVolumeChange(draftClickVolume);
 					}}
 				>
 					{t("audio.applyChanges", "Apply changes")}
@@ -249,6 +266,44 @@ export function ZoomSoundEffectsPanel({
 				onChange={setDraftVolume}
 				formatValue={(value) => `${Math.round(value * 100)}%`}
 			/>
+			<section className="flex flex-col gap-2" aria-label="Mouse click sounds">
+				<SliderControl
+					label={t("audio.mouseClickVolume", "Mouse click volume")}
+					value={draftClickVolume}
+					min={0}
+					max={1}
+					step={0.01}
+					onChange={setDraftClickVolume}
+					formatValue={(value) => `${Math.round(value * 100)}%`}
+				/>
+				<p className="text-xs text-muted-foreground">
+					{t(
+						"audio.mouseClickDescription",
+						"Adds a sound to recorded mouse clicks. Set to 0% to mute.",
+					)}
+				</p>
+				<Button
+					variant="secondary"
+					size="sm"
+					aria-label="Preview mouse click sound"
+					disabled={draftClickVolume === 0}
+					onClick={() => {
+						clickAudioRef.current?.pause();
+						const audio = new Audio(resolveMouseClickSoundUrl());
+						audio.volume = draftClickVolume;
+						clickAudioRef.current = audio;
+						void audio
+							.play()
+							.catch(() =>
+								toast.warning(
+									t("audio.previewFailed", "Could not preview this sound."),
+								),
+							);
+					}}
+				>
+					{t("audio.previewSound", "Preview")}
+				</Button>
+			</section>
 			<ZoomSoundEffectsEditor settings={draft} onChange={setDraft} volume={draftVolume} />
 		</div>
 	);
