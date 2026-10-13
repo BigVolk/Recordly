@@ -1,7 +1,8 @@
-import { getLocalMediaServerPath } from "@/lib/localMediaUrl";
 import type { SourceAudioTrackSettings } from "@/components/video-editor/audio/audioTypes";
+import { getLocalMediaServerPath } from "@/lib/localMediaUrl";
 import { DEFAULT_WALLPAPER_PATH } from "@/lib/wallpapers";
 import { ASPECT_RATIOS, type AspectRatio, isCustomAspectRatio } from "@/utils/aspectRatioUtils";
+import { normalizeZoomSoundEffects, type ZoomSoundEffects } from "./audio/zoomSoundSettings";
 import { closeClipGaps, rippleRegionAnchors, rippleRegions } from "./clipSequence";
 import { CURSOR_MOTION_PRESETS, resolveCursorMotionPresetId } from "./cursorMotionPresets";
 import {
@@ -52,6 +53,7 @@ import {
 	DEFAULT_ZOOM_MOTION_BLUR_TUNING,
 	DEFAULT_ZOOM_OUT_EASING,
 	DEFAULT_ZOOM_SMOOTHNESS,
+	DEFAULT_ZOOM_WHOOSH_VOLUME,
 	getDefaultCaptionFontFamily,
 	normalizeCursorClickEffectColor,
 	normalizeCursorClickEffectStyle,
@@ -87,6 +89,8 @@ export interface ProjectEditorState {
 	backgroundBlur: number;
 	zoomMotionBlur: number;
 	zoomMotionBlurTuning: ZoomMotionBlurTuning;
+	zoomWhooshVolume: number;
+	zoomSoundEffects: ZoomSoundEffects;
 	connectZooms: boolean;
 	zoomInDurationMs: number;
 	zoomInOverlapMs: number;
@@ -839,6 +843,10 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 		backgroundBlur: normalizedBackgroundBlur,
 		zoomMotionBlur: normalizedZoomMotionBlur,
 		zoomMotionBlurTuning: normalizedZoomMotionBlurTuning,
+		zoomSoundEffects: normalizeZoomSoundEffects(editor.zoomSoundEffects),
+		zoomWhooshVolume: isFiniteNumber(editor.zoomWhooshVolume)
+			? clamp(editor.zoomWhooshVolume, 0, 1)
+			: DEFAULT_ZOOM_WHOOSH_VOLUME,
 		connectZooms: typeof editor.connectZooms === "boolean" ? editor.connectZooms : true,
 		zoomInDurationMs: normalizedMotionPreset.zoomInDurationMs,
 		zoomInOverlapMs: normalizedZoomInOverlapMs,

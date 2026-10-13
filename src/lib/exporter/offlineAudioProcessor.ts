@@ -129,9 +129,20 @@ export class OfflineAudioProcessor extends AudioMediaProcessor {
 
 		// Decode audio region overlay files
 		const regionEntries: Array<{ buffer: AudioBuffer; region: AudioRegion }> = [];
+		const regionBuffers = new Map<string, AudioBuffer | null>();
 		for (const region of audioRegions) {
 			if (this.cancelled) throw new Error("Export cancelled");
-			const buffer = await this.decodeAudioFromUrl(region.audioPath);
+			if (!regionBuffers.has(region.audioPath)) {
+				regionBuffers.set(
+					region.audioPath,
+					// Bundled whooshes are short files served as static assets. Decode them
+					// directly: the streaming demuxer requires byte ranges for raw FLAC.
+					region.id.startsWith("zoom-whoosh:")
+						? await this.bulkDecodeFromUrl(region.audioPath, OFFLINE_AUDIO_SAMPLE_RATE)
+						: await this.decodeAudioFromUrl(region.audioPath),
+				);
+			}
+			const buffer = regionBuffers.get(region.audioPath);
 			if (buffer) regionEntries.push({ buffer, region });
 		}
 

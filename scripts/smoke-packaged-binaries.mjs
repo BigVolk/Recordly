@@ -3,9 +3,13 @@ import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync 
 import path from "node:path";
 
 const projectRoot = process.cwd();
-const releaseRoot = path.join(projectRoot, "release");
+const releaseRoot = path.resolve(projectRoot, process.env.PACKAGED_SMOKE_RELEASE_DIR ?? "release");
 const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
-const productName = packageJson.productName ?? packageJson.name ?? "Recordly";
+const productName =
+	process.env.PACKAGED_SMOKE_PRODUCT_NAME?.trim() ||
+	packageJson.productName ||
+	packageJson.name ||
+	"Recordly";
 const packageName = packageJson.name ?? "recordly";
 
 function relativePath(filePath) {

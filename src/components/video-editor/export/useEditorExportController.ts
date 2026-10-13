@@ -49,6 +49,7 @@ export function useEditorExportController(input: Input) {
 		videoPath: input.videoPath,
 		videoPlaybackRef: input.videoPlaybackRef,
 		isPlaying: input.isPlaying,
+		duration: input.duration,
 		appearance: input.appearance,
 		timeline: input.timeline,
 		exportSettings: input.settings,

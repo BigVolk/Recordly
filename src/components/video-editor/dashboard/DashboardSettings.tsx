@@ -1,10 +1,10 @@
-import { SettingsSections, SettingsCategory } from "../SettingsSections";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { SettingsRow } from "../SettingsRow";
-import { Switch } from "@/components/ui/switch";
-import { supportsHudCaptureProtection } from "@/lib/hudCaptureProtection";
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/toast";
+import { supportsHudCaptureProtection } from "@/lib/hudCaptureProtection";
+import { SettingsRow } from "../SettingsRow";
+import { SettingsCategory, SettingsSections } from "../SettingsSections";
 export const DashboardSettingsContext = createContext<ReactNode>(null);
 export function DashboardSettings({ onImportFile }: { onImportFile: () => Promise<void> }) {
 	const settingsContent = useContext(DashboardSettingsContext);
@@ -44,8 +44,10 @@ export function DashboardSettings({ onImportFile }: { onImportFile: () => Promis
 	return (
 		<section aria-label="Dashboard settings" className="dashboard-settings max-w-2xl py-10">
 			<h1 className="mb-8 text-lg font-semibold">Settings</h1>
-			<SettingsSections categories={["general", "motion", "recording", "files", "advanced"]}>
-				<SettingsCategory category={["general", "motion", "advanced"]}>
+			<SettingsSections
+				categories={["general", "motion", "sounds", "recording", "files", "advanced"]}
+			>
+				<SettingsCategory category={["general", "motion", "sounds", "advanced"]}>
 					{settingsContent}
 				</SettingsCategory>
 				<SettingsCategory category="files">

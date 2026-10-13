@@ -1,13 +1,11 @@
-import { SettingsSections, SettingsCategory } from "./SettingsSections";
-import { Card, RadioGroup, Radio, Label, Description } from "@heroui/react";
-import { ProgressBar } from "@heroui/react";
-import { ColorControl, ColorPalette } from "@/components/ui/color-picker";
-import { Palette, Trash as Trash2, UploadSimple as Upload } from "@/components/ui/icons";
+import { Card, Description, Label, ProgressBar, Radio, RadioGroup } from "@heroui/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "@/components/ui/toast";
 import minimalCursorUrl from "@/assets/cursors/custom/minimal-cursor.svg";
 import { Button } from "@/components/ui/button";
+import { ChoiceGroup, ChoiceItem } from "@/components/ui/choice-group";
+import { ColorControl, ColorPalette } from "@/components/ui/color-picker";
+import { Palette, Trash as Trash2, UploadSimple as Upload } from "@/components/ui/icons";
 import {
 	Select,
 	SelectContent,
@@ -16,7 +14,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ChoiceGroup, ChoiceItem } from "@/components/ui/choice-group";
+import { toast } from "@/components/ui/toast";
+import { useShortcuts } from "@/contexts/ShortcutsContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { getAssetPath, getRenderableVideoUrl, getWallpaperThumbnailUrl } from "@/lib/assetPath";
 import { cn } from "@/lib/utils";
@@ -31,6 +30,8 @@ import { useI18n, useScopedT } from "../../contexts/I18nContext";
 import type { AppLocale } from "../../i18n/config";
 import { SUPPORTED_LOCALES } from "../../i18n/config";
 import { AnnotationSettingsPanel } from "./AnnotationSettingsPanel";
+import { ZoomSoundEffectsPanel } from "./audio/ZoomSoundEffectsPanel";
+import { DEFAULT_ZOOM_SOUND_EFFECTS, type ZoomSoundEffects } from "./audio/zoomSoundSettings";
 import CaptionListPanel from "./CaptionListPanel";
 import type { CaptionRetimeSpan } from "./captionOps";
 import {
@@ -40,10 +41,9 @@ import {
 } from "./cursorMotionPresets";
 import { loadEditorPreferences, saveEditorPreferences } from "./editorPreferences";
 import { getDefaultBorderRadiusPercent } from "./projectPersistence";
-import { SliderControl } from "./SliderControl";
-import { WallpaperGrid } from "./WallpaperGrid";
-import { useShortcuts } from "@/contexts/ShortcutsContext";
 import { SettingsRow } from "./SettingsRow";
+import { SettingsCategory, SettingsSections } from "./SettingsSections";
+import { SliderControl } from "./SliderControl";
 import type {
 	AnnotationRegion,
 	AnnotationType,
@@ -85,6 +85,7 @@ import {
 	DEFAULT_WEBCAM_SIZE,
 	DEFAULT_ZOOM_IN_DURATION_MS,
 	DEFAULT_ZOOM_OUT_DURATION_MS,
+	DEFAULT_ZOOM_WHOOSH_VOLUME,
 } from "./types";
 import { fromCursorSwaySliderValue, toCursorSwaySliderValue } from "./videoPlayback/cursorSway";
 import { isZeroPadding } from "./videoPlayback/layoutUtils";
@@ -93,6 +94,7 @@ import {
 	cursorSetAssets,
 	getCursorStyleSizeMultiplier,
 } from "./videoPlayback/uploadedCursorAssets";
+import { WallpaperGrid } from "./WallpaperGrid";
 import { WebcamCropControl } from "./WebcamCropControl";
 import {
 	getCropMatchedWebcamHeightPercent,
@@ -449,6 +451,10 @@ interface SettingsPanelProps {
 	onShadowChange?: (intensity: number) => void;
 	backgroundBlur?: number;
 	onBackgroundBlurChange?: (amount: number) => void;
+	zoomWhooshVolume?: number;
+	onZoomWhooshVolumeChange?: (volume: number) => void;
+	zoomSoundEffects?: ZoomSoundEffects;
+	onZoomSoundEffectsChange?: (settings: ZoomSoundEffects) => void;
 	connectZooms?: boolean;
 	onConnectZoomsChange?: (enabled: boolean) => void;
 	autoApplyFreshRecordingAutoZooms?: boolean;
@@ -906,6 +912,10 @@ export function SettingsPanel({
 	onShadowChange,
 	backgroundBlur = 0,
 	onBackgroundBlurChange,
+	zoomSoundEffects = DEFAULT_ZOOM_SOUND_EFFECTS,
+	onZoomSoundEffectsChange,
+	zoomWhooshVolume = DEFAULT_ZOOM_WHOOSH_VOLUME,
+	onZoomWhooshVolumeChange,
 	connectZooms = true,
 	onConnectZoomsChange,
 	autoApplyFreshRecordingAutoZooms = true,
@@ -1425,6 +1435,7 @@ export function SettingsPanel({
 		onZoomInDurationMsChange?.(initialEditorPreferences.zoomInDurationMs);
 		onZoomOutDurationMsChange?.(initialEditorPreferences.zoomOutDurationMs);
 		onZoomClassicModeChange?.(false);
+		onZoomWhooshVolumeChange?.(initialEditorPreferences.zoomWhooshVolume);
 	};
 
 	const resetCursorSection = () => {
@@ -2247,10 +2258,34 @@ export function SettingsPanel({
 		</section>
 	);
 
+	const whooshVolumeControl = (
+		<div className="flex flex-col gap-1">
+			<SliderControl
+				label={tSettings("audio.whooshVolume", "Whoosh volume")}
+				value={zoomWhooshVolume}
+				min={0}
+				max={1}
+				step={0.01}
+				onChange={(value) => onZoomWhooshVolumeChange?.(value)}
+				formatValue={(value) => `${Math.round(value * 100)}%`}
+			/>
+			<p className="text-xs text-muted-foreground">
+				{tSettings(
+					"audio.whooshVolumeDescription",
+					"Applies to all zoom sounds. Set to 0% to mute.",
+				)}
+			</p>
+		</div>
+	);
+
 	const effectSectionContent = (() => {
 		const settingsSectionContent = (
 			<SettingsSections
-				categories={advanced ? ["general", "motion", "advanced"] : ["general", "motion"]}
+				categories={
+					advanced
+						? ["general", "motion", "sounds", "advanced"]
+						: ["general", "motion", "sounds"]
+				}
 			>
 				<SettingsCategory category="general">
 					{onShowOnboarding && (
@@ -2329,7 +2364,16 @@ export function SettingsPanel({
 						</section>
 					)}
 				</SettingsCategory>
+				<SettingsCategory category="sounds">
+					{whooshVolumeControl}
+					<ZoomSoundEffectsPanel
+						settings={zoomSoundEffects}
+						onChange={(settings) => onZoomSoundEffectsChange?.(settings)}
+						volume={zoomWhooshVolume}
+					/>
+				</SettingsCategory>
 				<SettingsCategory category="motion">
+					{whooshVolumeControl}
 					<section className="flex flex-col gap-6">
 						<SettingsRow
 							title={tSettings(
@@ -2573,6 +2617,7 @@ export function SettingsPanel({
 
 		const zoomItemSectionContent = (
 			<section className="flex flex-col gap-4">
+				{whooshVolumeControl}
 				{selectedZoomId && (
 					<>
 						<SectionLabel>{tSettings("zoom.mode", "Mode")}</SectionLabel>

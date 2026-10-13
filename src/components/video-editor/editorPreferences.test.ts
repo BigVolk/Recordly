@@ -266,6 +266,38 @@ describe("editorPreferences", () => {
 		});
 	});
 
+	it("saves a muted whoosh preference and retains it in presets", () => {
+		vi.stubGlobal("localStorage", createStorageMock());
+		saveEditorPreferences({
+			zoomWhooshVolume: 0,
+			zoomSoundEffects: {
+				...DEFAULT_EDITOR_PREFERENCES.zoomSoundEffects,
+				largeZoomOut: "none",
+				smallZoomIn: "better",
+			},
+		});
+		expect(loadEditorPreferences().zoomWhooshVolume).toBe(0);
+		expect(loadEditorPreferences().zoomSoundEffects.smallZoomIn).toBe("better");
+		expect(loadEditorPreferences().zoomSoundEffects.largeZoomOut).toBe("none");
+		saveEditorPresets([
+			{
+				id: "quiet",
+				name: "Quiet",
+				createdAt: "2026-10-13T00:00:00Z",
+				updatedAt: "2026-10-13T00:00:00Z",
+				snapshot: {
+					...DEFAULT_EDITOR_PREFERENCES,
+					zoomWhooshVolume: 0,
+					zoomSoundEffects: loadEditorPreferences().zoomSoundEffects,
+					cropRegion: DEFAULT_CROP_REGION,
+					autoCaptionSettings: DEFAULT_AUTO_CAPTION_SETTINGS,
+				},
+			},
+		]);
+		expect(loadEditorPresets()[0].snapshot.zoomWhooshVolume).toBe(0);
+		expect(loadEditorPresets()[0].snapshot.zoomSoundEffects.smallZoomIn).toBe("better");
+	});
+
 	it("saves all editor controls with normalization", () => {
 		const localStorage = createStorageMock();
 		vi.stubGlobal("localStorage", localStorage);

@@ -81,6 +81,7 @@ export function useAudioPreviewSync({
 	const sourceAudioResumePromiseRef = useRef<Promise<void> | null>(null);
 	const lastSourceAudioSyncTimeRef = useRef<number | null>(null);
 	const [sourceLoadVersion, setSourceLoadVersion] = useState(0);
+	const [userLoadVersion, setUserLoadVersion] = useState(0);
 
 	const ensureSourceAudioContext = useCallback(() => {
 		if (!sourceAudioContextRef.current) {
@@ -115,7 +116,6 @@ export function useAudioPreviewSync({
 	}, [ensureSourceAudioRunning]);
 
 	useEffect(() => {
-		let cancelled = false;
 		const existing = audioElementsRef.current;
 		const currentIds = new Set(resolvedUserTracks.map((track) => track.id));
 
@@ -150,7 +150,6 @@ export function useAudioPreviewSync({
 					const latestAudio = existing.get(track.id);
 
 					if (
-						cancelled ||
 						latestAudio !== audio ||
 						audioElementResourcesRef.current.get(track.id) !== track.sourceRef.path
 					) {
@@ -160,15 +159,12 @@ export function useAudioPreviewSync({
 
 					audioElementRevokersRef.current.set(track.id, resolved.revoke);
 					latestAudio.src = resolved.src;
+					setUserLoadVersion((version) => version + 1);
 				})();
 			}
 
 			audio.volume = Math.max(0, Math.min(1, track.gain * previewVolume));
 		}
-
-		return () => {
-			cancelled = true;
-		};
 	}, [previewVolume, resolvedUserTracks]);
 
 	useEffect(() => {
@@ -338,11 +334,13 @@ export function useAudioPreviewSync({
 	}, []);
 
 	useEffect(() => {
+		// Resynchronize immediately when an overlay finishes loading.
+		void userLoadVersion;
 		const currentTimeMs = timelineTime * 1000;
 
 		for (const track of resolvedUserTracks) {
 			const audio = audioElementsRef.current.get(track.id);
-			if (!audio) continue;
+			if (!audio?.src) continue;
 
 			const startMs = track.timelineBinding.startMs;
 			const endMs = track.timelineBinding.endMs;
@@ -351,7 +349,7 @@ export function useAudioPreviewSync({
 			if (isPlaying && isInRegion) {
 				enablePitchPreservingPlayback(audio);
 				const audioOffset = (currentTimeMs - startMs) / 1000;
-				if (Math.abs(audio.currentTime - audioOffset) > 0.2) {
+				if (audio.paused || Math.abs(audio.currentTime - audioOffset) > 0.2) {
 					audio.currentTime = audioOffset;
 				}
 				const syncedPlaybackRate = getMediaSyncPlaybackRate({
@@ -369,7 +367,7 @@ export function useAudioPreviewSync({
 				audio.pause();
 			}
 		}
-	}, [isPlaying, resolvedUserTracks, timelineTime]);
+	}, [isPlaying, resolvedUserTracks, timelineTime, userLoadVersion]);
 
 	useEffect(() => {
 		if (resolvedSourceTracks.length === 0) {

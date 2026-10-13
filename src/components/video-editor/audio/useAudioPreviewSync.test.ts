@@ -157,3 +157,70 @@ describe("source preview playback ownership", () => {
 		if (plays) expect(audio.currentTime).toBeCloseTo(time - delay / 1000);
 	});
 });
+
+describe("zoom overlay preview transport", () => {
+	it("starts a late-loaded whoosh, pauses it, and restarts at the right offset after seeking", async () => {
+		const audio = {
+			src: "",
+			preload: "",
+			currentTime: 0,
+			playbackRate: 1,
+			paused: true,
+			volume: 1,
+			pause: vi.fn(() => {
+				audio.paused = true;
+			}),
+			play: vi.fn(async () => {
+				audio.paused = false;
+			}),
+		};
+		vi.stubGlobal("Audio", function () {
+			return audio;
+		});
+		const region = {
+			id: "zoom-whoosh:a:in",
+			startMs: 1000,
+			endMs: 1977,
+			audioPath: "whoosh.wav",
+			volume: 0.35,
+		};
+		const render = (playing: boolean, time: number, regions = [region]) => {
+			harness.index = 0;
+			harness.effects = [];
+			useAudioPreviewSync({
+				audioRegions: regions,
+				previewVolume: 0.5,
+				isPlaying: playing,
+				currentTime: time,
+				timelineTime: time,
+				duration: 10,
+				sourcePlaybackRate: 1,
+				previewSourceAudioFallbackPaths: [],
+				sourceAudioFallbackStartDelayMsByPath: {},
+				sourceAudioResourceVersion: 0,
+				isCurrentClipMuted: false,
+				getSourceTrackPreviewGain: () => 1,
+				onSourceFallbackLoadError: vi.fn(),
+			});
+			for (const effect of harness.effects) effect();
+		};
+		render(true, 1.1);
+		expect(audio.play).not.toHaveBeenCalled();
+		await Promise.resolve();
+		expect(harness.loaded).toHaveBeenCalledOnce();
+		render(true, 1.1);
+		expect(audio.currentTime).toBeCloseTo(0.1);
+		expect(audio.volume).toBeCloseTo(0.175);
+		expect(audio.play).toHaveBeenCalledOnce();
+		render(false, 1.1);
+		expect(audio.paused).toBe(true);
+		// A short backward seek must restart from zero, even within the drift tolerance.
+		render(true, 1);
+		expect(audio.currentTime).toBe(0);
+		expect(audio.play).toHaveBeenCalledTimes(2);
+		render(true, 2);
+		expect(audio.paused).toBe(true);
+		render(false, 0, []);
+		expect(audio.src).toBe("");
+	});
+});

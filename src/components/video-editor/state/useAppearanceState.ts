@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { normalizeZoomSoundEffects } from "../audio/zoomSoundSettings";
 import type { EditorPreferences } from "../editorPreferences";
 import type {
 	CropRegion,
@@ -21,6 +22,7 @@ import {
 	DEFAULT_ZOOM_MOTION_BLUR_TUNING,
 	DEFAULT_ZOOM_OUT_DURATION_MS,
 	DEFAULT_ZOOM_OUT_EASING,
+	DEFAULT_ZOOM_WHOOSH_VOLUME,
 } from "../types";
 
 export function useAppearanceState(preferences: EditorPreferences) {
@@ -33,6 +35,12 @@ export function useAppearanceState(preferences: EditorPreferences) {
 	);
 	const [autoApplyFreshRecordingAutoZooms, setAutoApplyFreshRecordingAutoZooms] = useState(
 		preferences.autoApplyFreshRecordingAutoZooms,
+	);
+	const [zoomWhooshVolume, setZoomWhooshVolume] = useState(
+		preferences.zoomWhooshVolume ?? DEFAULT_ZOOM_WHOOSH_VOLUME,
+	);
+	const [zoomSoundEffects, setZoomSoundEffects] = useState(() =>
+		normalizeZoomSoundEffects(preferences.zoomSoundEffects),
 	);
 	const [connectZooms, setConnectZooms] = useState(preferences.connectZooms);
 	const [zoomInDurationMs, setZoomInDurationMs] = useState(
@@ -128,6 +136,10 @@ export function useAppearanceState(preferences: EditorPreferences) {
 		setZoomMotionBlurTuning,
 		autoApplyFreshRecordingAutoZooms,
 		setAutoApplyFreshRecordingAutoZooms,
+		zoomWhooshVolume,
+		setZoomWhooshVolume,
+		zoomSoundEffects,
+		setZoomSoundEffects,
 		connectZooms,
 		setConnectZooms,
 		zoomInDurationMs,

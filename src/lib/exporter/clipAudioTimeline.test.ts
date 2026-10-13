@@ -8,8 +8,15 @@ class TestAudioProcessor extends OfflineAudioProcessor {
 	schedule = this.scheduleBufferThroughTimeline.bind(this);
 	scheduleOverlay = this.scheduleRegionForChunk.bind(this);
 	protected decodeAudioFromUrl = vi.fn(async () => buffer);
+	protected bulkDecodeFromUrl = vi.fn(async () => buffer);
 	protected getMediaDurationSec = vi.fn(async () => 12);
 	protected stretchAudioBuffer = vi.fn(() => buffer);
+	get decodes() {
+		return this.decodeAudioFromUrl.mock.calls;
+	}
+	get bulkDecodes() {
+		return this.bulkDecodeFromUrl.mock.calls;
+	}
 	get stretches() {
 		return this.stretchAudioBuffer.mock.calls;
 	}
@@ -101,5 +108,56 @@ describe("clip audio timeline", () => {
 		);
 		expect(prepared.slices).toEqual([]);
 		expect(prepared.outputDurationMs).toBe(12000);
+	});
+});
+
+describe("repeated zoom sound overlays", () => {
+	it("decodes each shared whoosh once and keeps every cue on the edited clip timeline", async () => {
+		const processor = new TestAudioProcessor();
+		const regions: AudioRegion[] = [
+			{
+				id: "zoom-whoosh:a:in",
+				startMs: 100,
+				endMs: 677,
+				audioPath: "better.flac",
+				volume: 0.35,
+			},
+			{
+				id: "zoom-whoosh:a:out",
+				startMs: 2000,
+				endMs: 3045,
+				audioPath: "whoosh-out.wav",
+				volume: 0.35,
+			},
+			{
+				id: "zoom-whoosh:b:in",
+				startMs: 3023,
+				endMs: 3600,
+				audioPath: "better.flac",
+				volume: 0.35,
+			},
+		];
+		const prepared = await processor.prepare(
+			"source.mp4",
+			[],
+			[],
+			regions,
+			[],
+			undefined,
+			undefined,
+			clips,
+		);
+		expect(processor.decodes.map((call) => call[0])).toEqual(["source.mp4"]);
+		expect(processor.bulkDecodes).toEqual([
+			["better.flac", 48000],
+			["whoosh-out.wav", 48000],
+		]);
+		expect(prepared.regionEntries).toHaveLength(3);
+		expect(prepared.outputDurationMs).toBe(4000);
+		const { starts, ctx } = context();
+		for (const { buffer: audio, region } of prepared.regionEntries) {
+			processor.scheduleOverlay(ctx, audio, region, prepared.slices, 0, 4, true);
+		}
+		expect(starts.map((start) => start.mock.calls[0][0])).toEqual([0.1, 2, 3.023]);
 	});
 });

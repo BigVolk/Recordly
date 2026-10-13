@@ -20,7 +20,7 @@ type DominantRegionOptions = {
 	zoomOutDurationMs?: number;
 };
 
-type ConnectedRegionPair = {
+export type ConnectedRegionPair = {
 	currentRegion: ZoomRegion;
 	nextRegion: ZoomRegion;
 	transitionStart: number;
@@ -35,14 +35,13 @@ type ConnectedPanTransition = {
 	endScale: number;
 };
 
-export function computeRegionStrength(
+/** Shared animation boundaries for camera motion and automatic zoom audio. */
+export function getZoomRegionTiming(
 	region: ZoomRegion,
-	timeMs: number,
 	options: Pick<DominantRegionOptions, "zoomInDurationMs" | "zoomOutDurationMs"> = {},
 ) {
 	const zoomInDurationMs = Math.max(1, options.zoomInDurationMs ?? ZOOM_IN_TRANSITION_WINDOW_MS);
 	const zoomOutDurationMs = Math.max(1, options.zoomOutDurationMs ?? TRANSITION_WINDOW_MS);
-	const adjustedTimeMs = timeMs - ZOOM_ANIMATION_DELAY_MS;
 	const leadInStart = region.startMs + ZOOM_IN_OVERLAP_MS - ZOOM_IN_TRANSITION_WINDOW_MS;
 	let zoomOutStart = region.endMs - ZOOM_OUT_EARLY_START_MS;
 	let zoomInEnd = leadInStart + zoomInDurationMs;
@@ -53,7 +52,30 @@ export function computeRegionStrength(
 		zoomOutStart = midpoint;
 	}
 
-	const leadOutEnd = zoomOutStart + zoomOutDurationMs;
+	return {
+		zoomInStartMs: leadInStart + ZOOM_ANIMATION_DELAY_MS,
+		zoomInEndMs: zoomInEnd + ZOOM_ANIMATION_DELAY_MS,
+		zoomOutStartMs: zoomOutStart + ZOOM_ANIMATION_DELAY_MS,
+		zoomOutEndMs: zoomOutStart + zoomOutDurationMs + ZOOM_ANIMATION_DELAY_MS,
+		zoomInDurationMs,
+		zoomOutDurationMs,
+	};
+}
+
+export function computeRegionStrength(
+	region: ZoomRegion,
+	timeMs: number,
+	options: Pick<DominantRegionOptions, "zoomInDurationMs" | "zoomOutDurationMs"> = {},
+) {
+	const {
+		zoomInStartMs: leadInStart,
+		zoomInEndMs: zoomInEnd,
+		zoomOutStartMs: zoomOutStart,
+		zoomOutEndMs: leadOutEnd,
+		zoomInDurationMs,
+		zoomOutDurationMs,
+	} = getZoomRegionTiming(region, options);
+	const adjustedTimeMs = timeMs;
 
 	if (adjustedTimeMs < leadInStart || adjustedTimeMs > leadOutEnd) {
 		return 0;
@@ -76,7 +98,7 @@ function getResolvedFocus(region: ZoomRegion, zoomScale: number): ZoomFocus {
 	return clampFocusToScale(region.focus, zoomScale);
 }
 
-function getConnectedRegionPairs(regions: ZoomRegion[]) {
+export function getConnectedRegionPairs(regions: ZoomRegion[]) {
 	const sortedRegions = [...regions].sort((a, b) => a.startMs - b.startMs);
 	const pairs: ConnectedRegionPair[] = [];
 

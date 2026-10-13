@@ -1,17 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-
+import {
+	createEditorHistoryStack,
+	type EditorHistorySnapshot,
+	recordEditorHistorySnapshot,
+	undoEditorHistoryStack,
+} from "./editorHistory";
 import {
 	getDefaultBorderRadiusPercent,
 	legacyBorderRadiusPixelsToPercent,
 	normalizeProjectEditor,
 	resolveVideoUrl,
 } from "./projectPersistence";
-import {
-	createEditorHistoryStack,
-	recordEditorHistorySnapshot,
-	undoEditorHistoryStack,
-	type EditorHistorySnapshot,
-} from "./editorHistory";
 import { ADVANCED_VERTICAL_PADDING_MAX } from "./types";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -291,4 +290,34 @@ it("ignores legacy export preferences when opening and resaving a project", asyn
 		expect(createProjectData("/clip.mp4", legacyEditor).editor).not.toHaveProperty(key);
 	}
 	expect(legacyEditor.exportQuality).toBe("high");
+});
+
+describe("project whoosh volume", () => {
+	it("defaults older projects to the original volume and preserves a saved mute", () => {
+		expect(normalizeProjectEditor({}).zoomWhooshVolume).toBe(0.35);
+		expect(normalizeProjectEditor({ zoomWhooshVolume: 0 }).zoomWhooshVolume).toBe(0);
+		expect(normalizeProjectEditor({ zoomWhooshVolume: 0.72 }).zoomWhooshVolume).toBe(0.72);
+	});
+	it("normalizes out-of-range or invalid saved values", () => {
+		expect(normalizeProjectEditor({ zoomWhooshVolume: 2 }).zoomWhooshVolume).toBe(1);
+		expect(normalizeProjectEditor({ zoomWhooshVolume: -1 }).zoomWhooshVolume).toBe(0);
+		expect(normalizeProjectEditor({ zoomWhooshVolume: Number.NaN }).zoomWhooshVolume).toBe(
+			0.35,
+		);
+	});
+});
+
+describe("saved zoom sound assignments", () => {
+	it("retains independent direction and size settings when a project is reopened", () => {
+		const zoomSoundEffects = {
+			smallZoomIn: "better",
+			smallZoomOut: "generic-air",
+			largeZoomIn: "engine-dry",
+			largeZoomOut: "none",
+			largeZoomThreshold: 2.2,
+		} as const;
+		expect(normalizeProjectEditor({ zoomSoundEffects }).zoomSoundEffects).toEqual(
+			zoomSoundEffects,
+		);
+	});
 });

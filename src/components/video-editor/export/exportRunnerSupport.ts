@@ -17,6 +17,7 @@ export type ExportRunnerInput = {
 	videoPath: string | null;
 	videoPlaybackRef: RefObject<VideoPlaybackRef | null>;
 	isPlaying: boolean;
+	duration: number;
 	appearance: ReturnType<typeof useAppearanceState>;
 	timeline: ReturnType<typeof useTimelineState>;
 	exportSettings: ReturnType<typeof useExportSettings>;

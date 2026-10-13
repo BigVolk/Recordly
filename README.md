@@ -88,6 +88,8 @@ Browse and install community extensions from the [Recordly Marketplace](https://
 - Trim unwanted sections
 - Add manual zoom regions
 - Use automatic zoom suggestions based on cursor activity
+- Automatically add whoosh sounds to zoom transitions in preview and MP4 exports
+- Choose and preview separate sounds for small and large zooms, in and out
 - Add speed-up and slow-down regions
 - Add text, image, and figure annotations
 - Add extra audio regions on the timeline
@@ -407,3 +409,7 @@ Created by
 [@webadderall](https://x.com/webadderall)
 
 ---
+
+## Personal macOS build
+
+Double-click `build-recordly-gabriel.command`, or run `npm run build:gabriel`, to create `recordly-gabriel.app` without installing it. See [build instructions](docs/build-gabriel-mac.md).

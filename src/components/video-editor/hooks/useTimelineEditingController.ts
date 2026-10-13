@@ -1,9 +1,10 @@
 import type { Dispatch, MutableRefObject, RefObject, SetStateAction } from "react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "@/components/ui/toast";
 import type { useI18n } from "@/contexts/I18nContext";
 import type { useShortcuts } from "@/contexts/ShortcutsContext";
 import { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
+import { buildZoomWhooshRegions } from "../audio/zoomWhooshes";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
@@ -83,11 +84,46 @@ export function useTimelineEditingController(input: Input) {
 		autoFullTrackIdRef: input.autoFullTrackClipIdRef,
 		autoFullTrackEndRef: input.autoFullTrackClipEndMsRef,
 	});
+	const {
+		zoomWhooshVolume,
+		zoomSoundEffects,
+		connectZooms,
+		zoomInDurationMs,
+		zoomOutDurationMs,
+	} = input.appearance;
+	const zoomWhooshRegions = useMemo(
+		() =>
+			buildZoomWhooshRegions(
+				projection.effectiveZoomRegions,
+				projection.timelineDuration * 1000,
+				{
+					zoomWhooshVolume,
+					zoomSoundEffects,
+					connectZooms,
+					zoomInDurationMs,
+					zoomOutDurationMs,
+				},
+			),
+		[
+			projection.effectiveZoomRegions,
+			projection.timelineDuration,
+			zoomWhooshVolume,
+			zoomSoundEffects,
+			connectZooms,
+			zoomInDurationMs,
+			zoomOutDurationMs,
+		],
+	);
+	const playbackAudioRegions = useMemo(
+		() => [...timeline.audioRegions, ...zoomWhooshRegions],
+		[timeline.audioRegions, zoomWhooshRegions],
+	);
+
 	const audio = useVideoEditorAudio({
 		currentSourcePath: input.currentSourcePath,
 		selectedClipId: timeline.selectedClipId,
 		clipRegions: timeline.clipRegions,
-		audioRegions: timeline.audioRegions,
+		audioRegions: playbackAudioRegions,
 		sourceAudioTrackSettingsByClip: timeline.sourceAudioTrackSettingsByClip,
 		setSourceAudioTrackSettingsByClip: timeline.setSourceAudioTrackSettingsByClip,
 		defaultSourceAudioTrackSettings: timeline.defaultSourceAudioTrackSettings,

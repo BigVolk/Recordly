@@ -1,13 +1,12 @@
 import { WebDemuxer } from "web-demuxer";
-import { AudioTimelineProcessor } from "./audioTimelineProcessor";
 import { DECODE_BACKPRESSURE_LIMIT, OFFLINE_AUDIO_SAMPLE_RATE } from "./audioProcessorShared";
+import { AudioTimelineProcessor } from "./audioTimelineProcessor";
 import { resolveMediaElementSource } from "./localMediaSource";
 
 export class AudioMediaProcessor extends AudioTimelineProcessor {
 	protected async decodeAudioFromUrl(url: string): Promise<AudioBuffer | null> {
 		try {
-			const buffer = await this.streamDecodeFromUrl(url);
-			if (buffer) return buffer;
+			return await this.streamDecodeFromUrl(url);
 		} catch (error) {
 			console.warn(
 				"[AudioProcessor] Streaming decode failed, falling back to bulk decode:",
@@ -28,13 +27,12 @@ export class AudioMediaProcessor extends AudioTimelineProcessor {
 			const wasmUrl = new URL("./wasm/web-demuxer.wasm", window.location.href).href;
 			demuxer = new WebDemuxer({ wasmFilePath: wasmUrl });
 			await demuxer.load(source.src);
+			// Asking for an absent audio stream can leave the demuxer's worker waiting.
+			// Silent recordings still need their zoom sound overlays mixed into the export.
+			const streams = await demuxer.getAVStreams();
+			if (!streams.some((stream) => stream.codec_type_string === "audio")) return null;
 
-			let audioConfig: AudioDecoderConfig;
-			try {
-				audioConfig = (await demuxer.getDecoderConfig("audio")) as AudioDecoderConfig;
-			} catch {
-				return null; // No audio track
-			}
+			const audioConfig = (await demuxer.getDecoderConfig("audio")) as AudioDecoderConfig;
 
 			const sampleRate = audioConfig.sampleRate || 48_000;
 			const numChannels = Math.min(audioConfig.numberOfChannels || 2, 2);

@@ -3,10 +3,12 @@ import { toast } from "@/components/ui/toast";
 import { getMp4ExportBitrate } from "@/lib/exporter/exportBitrate";
 import { DEFAULT_MP4_CODEC } from "@/lib/exporter/mp4Support";
 import type { ExportSettings } from "@/lib/exporter/types";
+import { buildZoomWhooshRegions } from "../audio/zoomWhooshes";
 import { calculateMp4ExportDimensions, capMp4ShareDimensions } from "../exportDimensions";
 import { resolveMp4ExportRouting } from "../mp4ExportRouting";
 import { resolveMp4ExportSettings } from "../mp4ExportSettings";
 import { createSmokeExportProgressSampler } from "../smokeExportProgress";
+import { getTimelineDurationMs } from "../types";
 import { buildExportRenderOptions } from "./buildExportRenderOptions";
 import {
 	type PendingExportSave,
@@ -32,6 +34,7 @@ export function useExportRunner(input: ExportRunnerInput) {
 		): Promise<string | undefined> => {
 			const {
 				videoPath,
+				duration,
 				videoPlaybackRef,
 				isPlaying,
 				appearance,
@@ -52,6 +55,14 @@ export function useExportRunner(input: ExportRunnerInput) {
 			} = inputRef.current;
 			const { shadowIntensity, padding } = appearance;
 			const { audioRegions, clipRegions, selectedClipId } = timeline;
+			const exportAudioRegions = [
+				...audioRegions,
+				...buildZoomWhooshRegions(
+					effectiveZoomRegions,
+					getTimelineDurationMs(clipRegions, duration * 1000),
+					appearance,
+				),
+			];
 			const {
 				exportQuality,
 				exportEncodingMode,
@@ -317,7 +328,7 @@ export function useExportRunner(input: ExportRunnerInput) {
 								setExportProgress(progress);
 							},
 						}),
-						audioRegions,
+						audioRegions: exportAudioRegions,
 						clipRegions,
 						sourceAudioFallbackPaths: audio.sourceAudioFallbackPaths,
 						sourceAudioFallbackStartDelayMsByPath:

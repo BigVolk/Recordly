@@ -1,5 +1,5 @@
-import { normalizeExportPreferences, type ExportPreferences } from "./exportPreferences";
 import { loadAppSetting, saveAppSetting } from "../../lib/appSettings";
+import { type ExportPreferences, normalizeExportPreferences } from "./exportPreferences";
 import {
 	getDefaultBorderRadiusPercent,
 	legacyBorderRadiusPixelsToPercent,
@@ -15,6 +15,8 @@ type PersistedEditorControls = Pick<
 	| "backgroundBlur"
 	| "zoomMotionBlur"
 	| "zoomMotionBlurTuning"
+	| "zoomWhooshVolume"
+	| "zoomSoundEffects"
 	| "connectZooms"
 	| "zoomInDurationMs"
 	| "zoomInOverlapMs"
@@ -92,6 +94,8 @@ export const DEFAULT_EDITOR_PREFERENCES: EditorPreferences = {
 	backgroundBlur: DEFAULT_EDITOR_CONTROLS.backgroundBlur,
 	zoomMotionBlur: DEFAULT_EDITOR_CONTROLS.zoomMotionBlur,
 	zoomMotionBlurTuning: DEFAULT_EDITOR_CONTROLS.zoomMotionBlurTuning,
+	zoomWhooshVolume: DEFAULT_EDITOR_CONTROLS.zoomWhooshVolume,
+	zoomSoundEffects: DEFAULT_EDITOR_CONTROLS.zoomSoundEffects,
 	connectZooms: DEFAULT_EDITOR_CONTROLS.connectZooms,
 	zoomInDurationMs: DEFAULT_EDITOR_CONTROLS.zoomInDurationMs,
 	zoomInOverlapMs: DEFAULT_EDITOR_CONTROLS.zoomInOverlapMs,
@@ -275,6 +279,8 @@ function normalizeEditorControls(
 		shadowIntensity: sanitizedRaw.shadowIntensity ?? fallback.shadowIntensity,
 		backgroundBlur: sanitizedRaw.backgroundBlur ?? fallback.backgroundBlur,
 		zoomMotionBlur: sanitizedRaw.zoomMotionBlur ?? fallback.zoomMotionBlur,
+		zoomWhooshVolume: sanitizedRaw.zoomWhooshVolume ?? fallback.zoomWhooshVolume,
+		zoomSoundEffects: sanitizedRaw.zoomSoundEffects ?? fallback.zoomSoundEffects,
 		connectZooms: sanitizedRaw.connectZooms ?? fallback.connectZooms,
 		zoomInDurationMs: sanitizedRaw.zoomInDurationMs ?? fallback.zoomInDurationMs,
 		zoomInOverlapMs: sanitizedRaw.zoomInOverlapMs ?? fallback.zoomInOverlapMs,
@@ -332,6 +338,8 @@ function normalizeEditorControls(
 		backgroundBlur: normalized.backgroundBlur,
 		zoomMotionBlur: normalized.zoomMotionBlur,
 		zoomMotionBlurTuning: normalized.zoomMotionBlurTuning,
+		zoomWhooshVolume: normalized.zoomWhooshVolume,
+		zoomSoundEffects: normalized.zoomSoundEffects,
 		connectZooms: normalized.connectZooms,
 		zoomInDurationMs: normalized.zoomInDurationMs,
 		zoomInOverlapMs: normalized.zoomInOverlapMs,

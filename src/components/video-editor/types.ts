@@ -183,6 +183,7 @@ export const DEFAULT_ZOOM_MOTION_BLUR_TUNING: ZoomMotionBlurTuning = {
 	zoomResponsePerSecond: 9,
 	zoomSafeZoneRadiusPx: 6,
 };
+export const DEFAULT_ZOOM_WHOOSH_VOLUME = 0.35;
 export const DEFAULT_ZOOM_IN_DURATION_MS = 1522.575;
 export const DEFAULT_ZOOM_IN_OVERLAP_MS = 500;
 export const DEFAULT_ZOOM_OUT_DURATION_MS = 1015.05;
