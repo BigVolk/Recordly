@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { normalizeCustomSoundEffects, type CustomSoundEffect } from "./customSoundEffects";
 import { buildMouseClickRegions } from "./mouseClicks";
+import { createProjectData, normalizeProjectEditor } from "../projectPersistence";
 import { DEFAULT_ZOOM_SOUND_EFFECTS, normalizeZoomSoundEffects } from "./zoomSoundSettings";
 import { buildZoomWhooshRegions } from "./zoomWhooshes";
 
@@ -34,6 +35,31 @@ describe("imported sound assignments", () => {
 				mouseClickSound: whoosh.id,
 			}),
 		).toMatchObject({ smallZoomIn: "dry-short-in", mouseClickSound: "default-click" });
+	});
+	it("restores every sound control from a saved project", () => {
+		const effects = {
+			...DEFAULT_ZOOM_SOUND_EFFECTS,
+			customSounds: [whoosh, click],
+			smallZoomIn: whoosh.id,
+			largeZoomOut: "none" as const,
+			mouseClickSound: click.id,
+			largeZoomThreshold: 2.7,
+			delaysMs: {
+				smallZoomIn: -275,
+				smallZoomOut: 120,
+				largeZoomIn: 330,
+				largeZoomOut: -410,
+			},
+		};
+		const project = createProjectData("/recordings/clip.mp4", {
+			zoomSoundEffects: effects,
+			zoomWhooshVolume: 0.81,
+			mouseClickVolume: 0.42,
+		});
+		const restored = normalizeProjectEditor(JSON.parse(JSON.stringify(project)).editor);
+		expect(restored.zoomSoundEffects).toEqual(effects);
+		expect(restored.zoomWhooshVolume).toBe(0.81);
+		expect(restored.mouseClickVolume).toBe(0.42);
 	});
 	it("rejects invalid metadata and duplicate IDs", () => {
 		expect(

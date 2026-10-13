@@ -10,6 +10,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { useScopedT } from "@/contexts/I18nContext";
 import { SliderControl } from "../SliderControl";
+import { saveEditorPreferences } from "../editorPreferences";
 import { DEFAULT_ZOOM_WHOOSH_VOLUME } from "../types";
 import { getZoomSoundAsset } from "./zoomSoundAssets";
 import { resolveMediaElementSource } from "@/lib/exporter/localMediaSource";
@@ -254,43 +255,42 @@ function ZoomSoundEffectsEditor({
 												type="number"
 												min={-MAX_ZOOM_SOUND_DELAY_MS}
 												max={MAX_ZOOM_SOUND_DELAY_MS}
-												step={10}
+												step={1}
 												value={
 													delayInputs[slot] ??
 													String(settings.delaysMs[slot])
 												}
-												onChange={(event) =>
+												onChange={(event) => {
+													const text = event.target.value;
 													setDelayInputs((current) => ({
 														...current,
-														[slot]: event.target.value,
-													}))
-												}
+														[slot]: text,
+													}));
+													if (
+														text.trim() !== "" &&
+														Number.isFinite(Number(text))
+													) {
+														const delay = Math.max(
+															-MAX_ZOOM_SOUND_DELAY_MS,
+															Math.min(
+																MAX_ZOOM_SOUND_DELAY_MS,
+																Math.round(Number(text)),
+															),
+														);
+														onChange({
+															...settings,
+															delaysMs: {
+																...settings.delaysMs,
+																[slot]: delay,
+															},
+														});
+													}
+												}}
 												onBlur={() => {
-													const text = delayInputs[slot];
 													setDelayInputs((current) => ({
 														...current,
 														[slot]: undefined,
 													}));
-													if (
-														text == null ||
-														text.trim() === "" ||
-														!Number.isFinite(Number(text))
-													)
-														return;
-													const delay = Math.max(
-														-MAX_ZOOM_SOUND_DELAY_MS,
-														Math.min(
-															MAX_ZOOM_SOUND_DELAY_MS,
-															Math.round(Number(text)),
-														),
-													);
-													onChange({
-														...settings,
-														delaysMs: {
-															...settings.delaysMs,
-															[slot]: delay,
-														},
-													});
 												}}
 												onKeyDown={(event) => {
 													if (event.key === "Enter")
@@ -350,6 +350,18 @@ export function ZoomSoundEffectsPanel({
 	const [library, setLibrary] = useState<CustomSoundEffect[]>([]);
 	const [importing, setImporting] = useState<SoundEffectKind | null>(null);
 	const catalog = mergeCustomSoundEffects(settings.customSounds, library);
+	function changeSettings(next: ZoomSoundEffects) {
+		saveEditorPreferences({ zoomSoundEffects: next });
+		onChange(next);
+	}
+	function changeWhooshVolume(next: number) {
+		saveEditorPreferences({ zoomWhooshVolume: next });
+		onVolumeChange(next);
+	}
+	function changeMouseClickVolume(next: number) {
+		saveEditorPreferences({ mouseClickVolume: next });
+		onMouseClickVolumeChange(next);
+	}
 	useEffect(() => {
 		let disposed = false;
 		void window.electronAPI
@@ -370,7 +382,7 @@ export function ZoomSoundEffectsPanel({
 			if (result.sounds?.length) {
 				const sounds = result.sounds;
 				setLibrary((current) => mergeCustomSoundEffects(current, sounds));
-				onChange({
+				changeSettings({
 					...settings,
 					customSounds: mergeCustomSoundEffects(settings.customSounds, library, sounds),
 					...(kind === "click" ? { mouseClickSound: sounds[0].id } : {}),
@@ -428,7 +440,7 @@ export function ZoomSoundEffectsPanel({
 				min={0}
 				max={1}
 				step={0.01}
-				onChange={onVolumeChange}
+				onChange={changeWhooshVolume}
 				formatValue={(value) => `${Math.round(value * 100)}%`}
 			/>
 			<p className="text-xs text-muted-foreground">
@@ -442,7 +454,7 @@ export function ZoomSoundEffectsPanel({
 					aria-label="Mouse click sound"
 					value={settings.mouseClickSound}
 					onValueChange={(value) =>
-						onChange({
+						changeSettings({
 							...settings,
 							customSounds: catalog,
 							mouseClickSound: value as MouseClickSoundChoice,
@@ -480,7 +492,7 @@ export function ZoomSoundEffectsPanel({
 					min={0}
 					max={1}
 					step={0.01}
-					onChange={onMouseClickVolumeChange}
+					onChange={changeMouseClickVolume}
 					formatValue={(value) => `${Math.round(value * 100)}%`}
 				/>
 				<p className="text-xs text-muted-foreground">
@@ -501,7 +513,7 @@ export function ZoomSoundEffectsPanel({
 			</section>
 			<ZoomSoundEffectsEditor
 				settings={settings}
-				onChange={onChange}
+				onChange={changeSettings}
 				volume={volume}
 				catalog={catalog}
 				importing={importing !== null}

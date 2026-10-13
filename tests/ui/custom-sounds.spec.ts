@@ -43,18 +43,29 @@ test("imports custom whoosh and click choices and saves them without Apply", asy
 	await expect(page.locator('button[aria-label="Mouse click sound"]')).toContainText(
 		"Imported tap",
 	);
+	const whooshVolume = page.getByRole("slider", { name: "Whoosh volume", exact: true });
+	const clickVolume = page.getByRole("slider", { name: "Mouse click volume", exact: true });
+	await whooshVolume.focus();
+	await page.keyboard.press("End");
+	await clickVolume.focus();
+	await page.keyboard.press("Home");
+	for (let i = 0; i < 47; i++) await page.keyboard.press("ArrowRight");
 	const preference = () =>
-		page.evaluate(
-			() =>
-				JSON.parse(localStorage.getItem("recordly.editor.preferences") || "{}")
-					.zoomSoundEffects,
+		page.evaluate(() =>
+			JSON.parse(localStorage.getItem("recordly.editor.preferences") || "{}"),
 		);
-	await expect
-		.poll(preference)
-		.toMatchObject({
+	await expect.poll(preference).toMatchObject({
+		zoomWhooshVolume: 1,
+		mouseClickVolume: 0.47,
+		zoomSoundEffects: {
 			smallZoomIn: "local:11111111-1111-4111-8111-111111111111",
 			mouseClickSound: "local:22222222-2222-4222-8222-222222222222",
-		});
+			customSounds: expect.arrayContaining([
+				expect.objectContaining({ name: "Imported air" }),
+				expect.objectContaining({ name: "Imported tap" }),
+			]),
+		},
+	});
 	await expect(page.getByRole("button", { name: "Apply changes" })).toHaveCount(0);
 	await page.reload();
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
@@ -66,4 +77,6 @@ test("imports custom whoosh and click choices and saves them without Apply", asy
 	await expect(page.locator('button[aria-label="Mouse click sound"]')).toContainText(
 		"Imported tap",
 	);
+	await expect(whooshVolume).toHaveValue("1");
+	await expect(clickVolume).toHaveValue("0.47");
 });
