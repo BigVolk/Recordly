@@ -13,6 +13,7 @@ import {
 	resolveVideoUrl,
 } from "./projectPersistence";
 import { ADVANCED_VERTICAL_PADDING_MAX } from "./types";
+import { DEFAULT_ZOOM_SOUND_EFFECTS } from "./audio/zoomSoundSettings";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -311,6 +312,7 @@ describe("project whoosh volume", () => {
 describe("saved zoom sound assignments", () => {
 	it("retains independent direction and size settings when a project is reopened", () => {
 		const zoomSoundEffects = {
+			...DEFAULT_ZOOM_SOUND_EFFECTS,
 			smallZoomIn: "better",
 			smallZoomOut: "generic-air",
 			largeZoomIn: "engine-dry",

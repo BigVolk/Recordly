@@ -563,6 +563,8 @@ export interface AudioRegion {
 	startMs: number;
 	endMs: number;
 	audioPath: string;
+	/** Offset into the sound when an early cue is clipped by the start of the timeline. */
+	sourceOffsetMs?: number;
 	volume: number;
 	normalize?: boolean;
 	trackIndex?: number;

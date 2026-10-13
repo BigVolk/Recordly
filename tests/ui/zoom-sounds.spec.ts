@@ -16,6 +16,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 		};
 	});
 	await page.goto("/?windowType=editor");
+	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Settings", exact: true }).click();
 	await page.getByRole("row", { name: "Sounds", exact: true }).click();
 
@@ -82,6 +83,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 		)
 		.toBe(1);
 	const saved = {
+		delaysMs: { smallZoomIn: 0, smallZoomOut: 0, largeZoomIn: 0, largeZoomOut: 0 },
 		smallZoomIn: "better",
 		smallZoomOut: "none",
 		largeZoomIn: "engine-dry",
@@ -99,6 +101,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 		.toEqual(saved);
 
 	await page.reload();
+	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Settings", exact: true }).click();
 	await page.getByRole("row", { name: "Sounds", exact: true }).click();
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(

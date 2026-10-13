@@ -53,12 +53,15 @@ export const ZOOM_SOUND_LIBRARY = [
 export type ZoomSoundId = (typeof ZOOM_SOUND_LIBRARY)[number]["id"];
 export type ZoomSoundChoice = ZoomSoundId | "none";
 export type ZoomSoundSize = "small" | "large";
+export type ZoomSoundSlot = "smallZoomIn" | "smallZoomOut" | "largeZoomIn" | "largeZoomOut";
+export const MAX_ZOOM_SOUND_DELAY_MS = 2000;
 export interface ZoomSoundEffects {
 	smallZoomIn: ZoomSoundChoice;
 	smallZoomOut: ZoomSoundChoice;
 	largeZoomIn: ZoomSoundChoice;
 	largeZoomOut: ZoomSoundChoice;
 	largeZoomThreshold: number;
+	delaysMs: Record<ZoomSoundSlot, number>;
 }
 
 export const DEFAULT_ZOOM_SOUND_EFFECTS: ZoomSoundEffects = {
@@ -67,6 +70,7 @@ export const DEFAULT_ZOOM_SOUND_EFFECTS: ZoomSoundEffects = {
 	largeZoomIn: "dry-short-in",
 	largeZoomOut: "dry-short-out",
 	largeZoomThreshold: 2,
+	delaysMs: { smallZoomIn: 0, smallZoomOut: 0, largeZoomIn: 0, largeZoomOut: 0 },
 };
 
 export function normalizeZoomSoundEffects(candidate: unknown): ZoomSoundEffects {
@@ -77,11 +81,24 @@ export function normalizeZoomSoundEffects(candidate: unknown): ZoomSoundEffects 
 			? (value as ZoomSoundChoice)
 			: fallback;
 	}
+	const rawDelays = raw.delaysMs && typeof raw.delaysMs === "object" ? raw.delaysMs : {};
+	function delay(slot: ZoomSoundSlot): number {
+		const value = (rawDelays as Partial<Record<ZoomSoundSlot, unknown>>)[slot];
+		return typeof value === "number" && Number.isFinite(value)
+			? Math.max(-MAX_ZOOM_SOUND_DELAY_MS, Math.min(MAX_ZOOM_SOUND_DELAY_MS, value))
+			: 0;
+	}
 	return {
 		smallZoomIn: choice(raw.smallZoomIn, DEFAULT_ZOOM_SOUND_EFFECTS.smallZoomIn),
 		smallZoomOut: choice(raw.smallZoomOut, DEFAULT_ZOOM_SOUND_EFFECTS.smallZoomOut),
 		largeZoomIn: choice(raw.largeZoomIn, DEFAULT_ZOOM_SOUND_EFFECTS.largeZoomIn),
 		largeZoomOut: choice(raw.largeZoomOut, DEFAULT_ZOOM_SOUND_EFFECTS.largeZoomOut),
+		delaysMs: {
+			smallZoomIn: delay("smallZoomIn"),
+			smallZoomOut: delay("smallZoomOut"),
+			largeZoomIn: delay("largeZoomIn"),
+			largeZoomOut: delay("largeZoomOut"),
+		},
 		largeZoomThreshold:
 			typeof raw.largeZoomThreshold === "number" && Number.isFinite(raw.largeZoomThreshold)
 				? Math.max(1.1, Math.min(5, raw.largeZoomThreshold))
@@ -104,6 +121,10 @@ export function getZoomSoundChoice(
 	direction: "in" | "out",
 	size: ZoomSoundSize,
 ): ZoomSoundChoice {
-	if (size === "large") return direction === "in" ? settings.largeZoomIn : settings.largeZoomOut;
-	return direction === "in" ? settings.smallZoomIn : settings.smallZoomOut;
+	return settings[getZoomSoundSlot(direction, size)];
+}
+
+export function getZoomSoundSlot(direction: "in" | "out", size: ZoomSoundSize): ZoomSoundSlot {
+	if (size === "large") return direction === "in" ? "largeZoomIn" : "largeZoomOut";
+	return direction === "in" ? "smallZoomIn" : "smallZoomOut";
 }

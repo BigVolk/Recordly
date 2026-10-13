@@ -15,12 +15,14 @@ import { resolveZoomSoundUrl } from "./zoomSoundAssets";
 import { resolveMouseClickSoundUrl } from "./mouseClickSound";
 import {
 	DEFAULT_ZOOM_SOUND_EFFECTS,
+	MAX_ZOOM_SOUND_DELAY_MS,
 	ZOOM_SOUND_LIBRARY,
 	type ZoomSoundChoice,
 	type ZoomSoundEffects,
+	type ZoomSoundSlot,
 } from "./zoomSoundSettings";
 
-type SoundSlot = Exclude<keyof ZoomSoundEffects, "largeZoomThreshold">;
+type SoundSlot = ZoomSoundSlot;
 const groups = [
 	{ size: "small", slots: ["smallZoomIn", "smallZoomOut"] },
 	{ size: "large", slots: ["largeZoomIn", "largeZoomOut"] },
@@ -108,6 +110,12 @@ function ZoomSoundEffectsEditor({
 					{t("audio.resetSounds", "Reset sounds")}
 				</Button>
 			</div>
+			<p className="text-xs text-muted-foreground">
+				{t(
+					"audio.delayDescription",
+					"Negative delay plays the whoosh before the zoom; positive delay plays it after. 0 ms keeps it aligned with the zoom.",
+				)}
+			</p>
 			{groups.map(({ size, slots }) => (
 				<section
 					key={size}
@@ -169,6 +177,25 @@ function ZoomSoundEffectsEditor({
 												: t("audio.previewSound", "Preview")}
 										</Button>
 									</div>
+									<SliderControl
+										label={t(
+											`audio.delay.${slot}`,
+											`${size === "small" ? "Small" : "Large"} zoom ${direction} delay`,
+										)}
+										value={settings.delaysMs[slot]}
+										min={-MAX_ZOOM_SOUND_DELAY_MS}
+										max={MAX_ZOOM_SOUND_DELAY_MS}
+										step={10}
+										onChange={(delay) =>
+											onChange({
+												...settings,
+												delaysMs: { ...settings.delaysMs, [slot]: delay },
+											})
+										}
+										formatValue={(delay) =>
+											`${delay > 0 ? "+" : ""}${delay} ms`
+										}
+									/>
 								</div>
 							);
 						})}
@@ -232,8 +259,12 @@ export function ZoomSoundEffectsPanel({
 	const hasChanges =
 		draftClickVolume !== mouseClickVolume ||
 		draftVolume !== volume ||
-		(Object.keys(settings) as (keyof ZoomSoundEffects)[]).some(
-			(key) => draft[key] !== settings[key],
+		(Object.keys(settings) as (keyof ZoomSoundEffects)[]).some((key) =>
+			key === "delaysMs"
+				? (Object.keys(settings.delaysMs) as SoundSlot[]).some(
+						(slot) => draft.delaysMs[slot] !== settings.delaysMs[slot],
+					)
+				: draft[key] !== settings[key],
 		);
 	return (
 		<div className="flex flex-col gap-5">

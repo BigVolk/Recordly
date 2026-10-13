@@ -17,3 +17,5 @@ Open **Settings → Sounds** to choose separate effects for small zoom in, small
 In Settings → Sounds, click **Apply changes** after editing sounds, volume, or the large-zoom threshold. Previews audition your pending choices; playback, exports, and saved settings update when you apply them.
 
 Mouse click sounds follow the recorded button-down events in playback and MP4 exports, including right, middle, and double clicks. **Settings → Sounds** has separate **Whoosh volume** and **Mouse click volume** sliders. Click **Apply changes** to save both; 0% mutes only that effect. Click timing follows clip trims, order, repeated clips, and playback speed. Recordings without click telemetry remain silent. The bundled `src/assets/sounds/mouse-click.wav` is an original synthesized click.
+
+Each small/large zoom-in/out assignment has its own **Whoosh delay** slider, from −2000 to +2000 milliseconds. Negative values start earlier, positive values start later, and 0 aligns the effect with the transition. Use **Apply changes** to update playback, exports, and saved settings. Effects extending before the timeline starts are clipped to the part that remains audible.

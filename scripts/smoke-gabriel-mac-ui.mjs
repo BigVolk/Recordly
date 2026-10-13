@@ -116,6 +116,22 @@ try {
 	await page.keyboard.press("Home");
 	for (let i = 0; i < 60; i++) await page.keyboard.press("ArrowRight");
 	await expect(volume).toHaveValue("1");
+	const delayValues = {
+		smallZoomIn: -150,
+		smallZoomOut: 200,
+		largeZoomIn: 300,
+		largeZoomOut: -400,
+	};
+	for (const [label, value] of [
+		["Small zoom in delay", -150],
+		["Small zoom out delay", 200],
+		["Large zoom in delay", 300],
+		["Large zoom out delay", -400],
+	]) {
+		await page.getByRole("slider", { name: label, exact: true }).focus();
+		for (let i = 0; i < Math.abs(value / 10); i++)
+			await page.keyboard.press(value < 0 ? "ArrowLeft" : "ArrowRight");
+	}
 	await apply.click();
 	await expect
 		.poll(() =>
@@ -138,6 +154,14 @@ try {
 			() => window.electronAPI.getAppSetting("recordly.editor.preferences")?.mouseClickVolume,
 		),
 		0.6,
+	);
+	assert.deepEqual(
+		await page.evaluate(
+			() =>
+				window.electronAPI.getAppSetting("recordly.editor.preferences")?.zoomSoundEffects
+					?.delaysMs,
+		),
+		delayValues,
 	);
 	await page.evaluate(() => {
 		const play = HTMLMediaElement.prototype.play;
@@ -178,7 +202,7 @@ try {
 	assert.deepEqual(errors, []);
 	await page.screenshot({ path: path.join(root, ".tmp/gabriel-packaged-ui.png") });
 	console.log(
-		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, independent click/whoosh volumes, click audio, Apply, and saved settings.",
+		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, independent click/whoosh volumes, click audio, whoosh delays, Apply, and saved settings.",
 	);
 } finally {
 	if (browser) await browser.close().catch(() => {});

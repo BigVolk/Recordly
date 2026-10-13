@@ -10,6 +10,7 @@ import { resolveZoomSoundUrl } from "./zoomSoundAssets";
 import {
 	getZoomSoundChoice,
 	getZoomSoundSize,
+	getZoomSoundSlot,
 	normalizeZoomSoundEffects,
 	ZOOM_SOUND_LIBRARY,
 	type ZoomSoundEffects,
@@ -62,12 +63,16 @@ export function buildZoomWhooshRegions(
 		if (soundId === "none") return;
 		const sound = ZOOM_SOUND_LIBRARY.find((candidate) => candidate.id === soundId);
 		if (!sound) return;
-		const startMs = Math.max(0, timeMs);
-		if (startMs >= timelineDurationMs) return;
+		const requestedStart =
+			Math.max(0, timeMs) + settings.delaysMs[getZoomSoundSlot(direction, size)];
+		const startMs = Math.max(0, requestedStart);
+		const endMs = Math.min(timelineDurationMs, requestedStart + sound.durationMs);
+		if (startMs >= endMs) return;
 		result.push({
 			id: `zoom-whoosh:${region.id}:${suffix}`,
 			startMs,
-			endMs: Math.min(timelineDurationMs, startMs + sound.durationMs),
+			endMs,
+			...(requestedStart < 0 ? { sourceOffsetMs: -requestedStart } : {}),
 			audioPath: resolveZoomSoundUrl(sound.id),
 			volume,
 		});

@@ -8,6 +8,22 @@ import {
 } from "./zoomSoundSettings";
 
 describe("zoom sound settings", () => {
+	it("normalizes independent signed delays and migrates missing or invalid values", () => {
+		expect(
+			normalizeZoomSoundEffects({ delaysMs: { smallZoomIn: -150, largeZoomOut: 320 } })
+				.delaysMs,
+		).toEqual({ smallZoomIn: -150, smallZoomOut: 0, largeZoomIn: 0, largeZoomOut: 320 });
+		expect(
+			normalizeZoomSoundEffects({
+				delaysMs: {
+					smallZoomIn: -5000,
+					smallZoomOut: 5000,
+					largeZoomIn: Number.NaN,
+					largeZoomOut: "100",
+				},
+			}).delaysMs,
+		).toEqual({ smallZoomIn: -2000, smallZoomOut: 2000, largeZoomIn: 0, largeZoomOut: 0 });
+	});
 	it("migrates older projects while preserving valid partial and muted choices", () => {
 		expect(normalizeZoomSoundEffects(undefined)).toEqual(DEFAULT_ZOOM_SOUND_EFFECTS);
 		expect(normalizeZoomSoundEffects({ smallZoomIn: "better", largeZoomOut: "none" })).toEqual({

@@ -122,6 +122,58 @@ describe("zoom whoosh volume", () => {
 });
 
 describe("sound choices for direction and zoom size", () => {
+	it("shifts each assignment independently using positive or negative delay", () => {
+		const regions = [zoom("small", 2000, 5000, 3), zoom("large", 8000, 11000, 4)];
+		const baseline = buildZoomWhooshRegions(regions, 15000);
+		const delaysMs = {
+			smallZoomIn: -150,
+			smallZoomOut: 200,
+			largeZoomIn: 300,
+			largeZoomOut: -400,
+		};
+		const shifted = buildZoomWhooshRegions(regions, 15000, {
+			zoomSoundEffects: { ...DEFAULT_ZOOM_SOUND_EFFECTS, delaysMs },
+		});
+		const expectedDelays = [-150, 200, 300, -400];
+		shifted.forEach((cue, index) =>
+			expect(cue.startMs - baseline[index].startMs).toBeCloseTo(expectedDelays[index], 6),
+		);
+	});
+	it("clips an early sound at the timeline start using its correct source offset", () => {
+		const shifted = buildZoomWhooshRegions([zoom("a", 0, 5000, 3)], 10000, {
+			zoomSoundEffects: {
+				...DEFAULT_ZOOM_SOUND_EFFECTS,
+				delaysMs: { ...DEFAULT_ZOOM_SOUND_EFFECTS.delaysMs, smallZoomIn: -200 },
+			},
+		});
+		expect(shifted[0]).toMatchObject({ startMs: 0, endMs: 777, sourceOffsetMs: 200 });
+		const outside = buildZoomWhooshRegions([zoom("a", 0, 9500, 3)], 10000, {
+			zoomSoundEffects: {
+				...DEFAULT_ZOOM_SOUND_EFFECTS,
+				delaysMs: {
+					...DEFAULT_ZOOM_SOUND_EFFECTS.delaysMs,
+					smallZoomIn: -2000,
+					smallZoomOut: 2000,
+				},
+			},
+		});
+		expect(outside).toEqual([]);
+	});
+	it("uses the classified delay for connected handoffs", () => {
+		const regions = [zoom("a", 2000, 5000, 3), zoom("b", 5500, 8500, 4)];
+		const options = { connectZooms: true };
+		const baseline = buildZoomWhooshRegions(regions, 12000, options).find((cue) =>
+			cue.id.endsWith(":handoff"),
+		)!;
+		const shifted = buildZoomWhooshRegions(regions, 12000, {
+			...options,
+			zoomSoundEffects: {
+				...DEFAULT_ZOOM_SOUND_EFFECTS,
+				delaysMs: { ...DEFAULT_ZOOM_SOUND_EFFECTS.delaysMs, smallZoomIn: -250 },
+			},
+		}).find((cue) => cue.id.endsWith(":handoff"))!;
+		expect(shifted.startMs).toBe(baseline.startMs - 250);
+	});
 	const settings = {
 		...DEFAULT_ZOOM_SOUND_EFFECTS,
 		smallZoomIn: "better",
