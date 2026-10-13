@@ -17,7 +17,6 @@ export function MicPopover({
 	onDisableMicrophone,
 	devices,
 	microphoneDeviceId,
-	selectedDeviceId,
 	onSelectDevice,
 }: {
 	trigger: ReactElement;
@@ -28,7 +27,6 @@ export function MicPopover({
 	onDisableMicrophone: () => void;
 	devices: DeviceOption[];
 	microphoneDeviceId?: string;
-	selectedDeviceId?: string;
 	onSelectDevice: (deviceId: string) => void;
 }) {
 	const t = useScopedT("launch");
@@ -84,9 +82,7 @@ export function MicPopover({
 					key={device.deviceId}
 					device={device}
 					selected={
-						microphoneEnabled &&
-						(microphoneDeviceId === device.deviceId ||
-							selectedDeviceId === device.deviceId)
+						microphoneEnabled && (microphoneDeviceId ?? "default") === device.deviceId
 					}
 					onSelect={() => onSelectDevice(device.deviceId)}
 				/>

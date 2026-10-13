@@ -1548,7 +1548,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 	const persistMicrophoneDeviceId = useCallback((deviceId: string | undefined) => {
 		setMicrophoneDeviceId(deviceId);
-		void window.electronAPI.setRecordingPreferences({ microphoneDeviceId: deviceId });
+		void window.electronAPI.setRecordingPreferences({ microphoneDeviceId: deviceId ?? null });
 	}, []);
 
 	const persistSystemAudioEnabled = useCallback((enabled: boolean) => {

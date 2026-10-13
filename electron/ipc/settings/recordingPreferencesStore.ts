@@ -3,7 +3,7 @@ import { parseJsonWithByteOrderMark } from "../utils";
 
 export interface RecordingPreferencesPatch {
 	microphoneEnabled?: boolean;
-	microphoneDeviceId?: string;
+	microphoneDeviceId?: string | null;
 	systemAudioEnabled?: boolean;
 	webcamEnabled?: boolean;
 	webcamDeviceId?: string;

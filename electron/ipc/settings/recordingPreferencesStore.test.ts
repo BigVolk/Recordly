@@ -43,4 +43,15 @@ describe("recording preferences store", () => {
 			webcamDeviceId: "preferred-camera",
 		});
 	});
+	it("clears an explicitly selected microphone when Default is chosen", async () => {
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "recordly-preferences-"));
+		temporaryDirectories.push(directory);
+		const store = createRecordingPreferencesStore(path.join(directory, "recording.json"));
+		await store.update({ microphoneDeviceId: "external-mic", microphoneEnabled: true });
+		await store.update({ microphoneDeviceId: null });
+		await expect(store.read()).resolves.toMatchObject({
+			microphoneDeviceId: null,
+			microphoneEnabled: true,
+		});
+	});
 });

@@ -8,9 +8,8 @@ export interface MicrophoneDevice {
 
 let hasRequestedMicrophoneLabels = false;
 
-export function useMicrophoneDevices(enabled: boolean = true, preferredDeviceId?: string) {
+export function useMicrophoneDevices(enabled: boolean = true) {
 	const [devices, setDevices] = useState<MicrophoneDevice[]>([]);
-	const [selectedDeviceId, setSelectedDeviceId] = useState<string>("default");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +37,10 @@ export function useMicrophoneDevices(enabled: boolean = true, preferredDeviceId?
 					}));
 
 				const needsLabelPermission =
-					audioInputs.length > 0 && audioInputs.every((device) => !device.label.trim());
+					allDevices.some((device) => device.kind === "audioinput") &&
+					allDevices
+						.filter((device) => device.kind === "audioinput")
+						.every((device) => !device.label.trim());
 
 				if (needsLabelPermission && !hasRequestedMicrophoneLabels) {
 					hasRequestedMicrophoneLabels = true;
@@ -54,30 +56,14 @@ export function useMicrophoneDevices(enabled: boolean = true, preferredDeviceId?
 				}
 
 				if (mounted) {
+					if (!audioInputs.some((device) => device.deviceId === "default")) {
+						audioInputs.unshift({
+							deviceId: "default",
+							label: "System default",
+							groupId: "",
+						});
+					}
 					setDevices(audioInputs);
-					setSelectedDeviceId((currentDeviceId) => {
-						const normalizedPreferredDeviceId = preferredDeviceId ?? "default";
-						if (
-							audioInputs.some(
-								(device) => device.deviceId === normalizedPreferredDeviceId,
-							)
-						) {
-							return normalizedPreferredDeviceId;
-						}
-
-						if (
-							currentDeviceId !== "default" &&
-							audioInputs.some((device) => device.deviceId === currentDeviceId)
-						) {
-							return currentDeviceId;
-						}
-
-						return (
-							audioInputs.find((device) => device.deviceId !== "default")?.deviceId ??
-							audioInputs[0]?.deviceId ??
-							"default"
-						);
-					});
 					setIsLoading(false);
 				}
 			} catch (error) {
@@ -107,12 +93,10 @@ export function useMicrophoneDevices(enabled: boolean = true, preferredDeviceId?
 			mounted = false;
 			navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
 		};
-	}, [enabled, preferredDeviceId]);
+	}, [enabled]);
 
 	return {
 		devices,
-		selectedDeviceId,
-		setSelectedDeviceId,
 		isLoading,
 		error,
 	};

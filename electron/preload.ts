@@ -1101,7 +1101,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	getRecordingAudioLabConfig: () => ipcRenderer.invoke("get-recording-audio-lab-config"),
 	setRecordingPreferences: (prefs: {
 		microphoneEnabled?: boolean;
-		microphoneDeviceId?: string;
+		microphoneDeviceId?: string | null;
 		systemAudioEnabled?: boolean;
 		webcamEnabled?: boolean;
 		webcamDeviceId?: string;

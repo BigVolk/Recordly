@@ -689,9 +689,7 @@ interface Window {
 			sounds: import("../src/components/video-editor/audio/customSoundEffects").CustomSoundEffect[];
 			message?: string;
 		}>;
-		importSoundEffects: (
-			kind: "whoosh" | "click",
-		) => Promise<{
+		importSoundEffects: (kind: "whoosh" | "click") => Promise<{
 			success: boolean;
 			canceled?: boolean;
 			sounds?: import("../src/components/video-editor/audio/customSoundEffects").CustomSoundEffect[];
@@ -1040,7 +1038,7 @@ interface Window {
 		}>;
 		setRecordingPreferences: (prefs: {
 			microphoneEnabled?: boolean;
-			microphoneDeviceId?: string;
+			microphoneDeviceId?: string | null;
 			systemAudioEnabled?: boolean;
 			webcamEnabled?: boolean;
 			webcamDeviceId?: string;

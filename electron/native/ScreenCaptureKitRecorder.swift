@@ -96,7 +96,12 @@ final class ScreenCaptureRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
 		let streamConfig = SCStreamConfiguration()
 		capturesSystemAudio = config.capturesSystemAudio ?? false
 		capturesMicrophone = config.capturesMicrophone ?? false
-		if capturesMicrophone && !supportsNativeMicrophoneCapture(streamConfig: streamConfig) {
+		let hasSelectedMicrophone = config.microphoneDeviceId?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false &&
+			config.microphoneDeviceId != "default"
+		if capturesMicrophone && (!supportsNativeMicrophoneCapture(streamConfig: streamConfig) ||
+			hasSelectedMicrophone) {
+			// Chromium device IDs are opaque and cannot be reliably mapped to
+			// ScreenCaptureKit IDs. The renderer captures the exact selected input.
 			fputs("MICROPHONE_CAPTURE_UNAVAILABLE\n", stderr)
 			fflush(stderr)
 			capturesMicrophone = false
@@ -117,9 +122,6 @@ final class ScreenCaptureRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
 
 		if capturesMicrophone {
 			streamConfig.setValue(true, forKey: "captureMicrophone")
-			if let microphoneDeviceId = Self.resolveMicrophoneCaptureDeviceID(config: config) {
-				streamConfig.setValue(microphoneDeviceId, forKey: "microphoneCaptureDeviceID")
-			}
 		}
 
 		let filter: SCContentFilter
@@ -826,24 +828,6 @@ final class ScreenCaptureRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
 			AVNumberOfChannelsKey: 2,
 			AVEncoderBitRateKey: bitRate,
 		]
-	}
-
-	private static func resolveMicrophoneCaptureDeviceID(config: CaptureConfig) -> String? {
-		let audioDevices = AVCaptureDevice.devices(for: .audio)
-
-		if let microphoneLabel = config.microphoneLabel?.trimmingCharacters(in: .whitespacesAndNewlines), !microphoneLabel.isEmpty {
-			if let matchedDevice = audioDevices.first(where: { $0.localizedName == microphoneLabel }) {
-				return matchedDevice.uniqueID
-			}
-		}
-
-		if let microphoneDeviceId = config.microphoneDeviceId?.trimmingCharacters(in: .whitespacesAndNewlines), !microphoneDeviceId.isEmpty {
-			if audioDevices.contains(where: { $0.uniqueID == microphoneDeviceId }) {
-				return microphoneDeviceId
-			}
-		}
-
-		return nil
 	}
 
 	private func supportsNativeMicrophoneCapture(streamConfig: SCStreamConfiguration) -> Bool {

@@ -87,10 +87,7 @@ function LaunchWindowContent() {
 		useLaunchWindowActions();
 
 	const showWebcamControls = webcamEnabled && !recording;
-	const { devices, selectedDeviceId, setSelectedDeviceId } = useMicrophoneDevices(
-		microphoneEnabled || openId === "mic",
-		microphoneDeviceId,
-	);
+	const { devices } = useMicrophoneDevices(microphoneEnabled || openId === "mic");
 	const {
 		devices: videoDevices,
 		selectedDeviceId: selectedVideoDeviceId,
@@ -99,14 +96,6 @@ function LaunchWindowContent() {
 
 	const { hudOverlayMousePassthroughSupported, platform } =
 		useLaunchWindowSystemState(preparePermissions);
-
-	useEffect(() => {
-		if (!selectedDeviceId) {
-			return;
-		}
-
-		setMicrophoneDeviceId(selectedDeviceId === "default" ? undefined : selectedDeviceId);
-	}, [selectedDeviceId, setMicrophoneDeviceId]);
 
 	useEffect(() => {
 		if (selectedVideoDeviceId && selectedVideoDeviceId !== "default") {
@@ -269,10 +258,8 @@ function LaunchWindowContent() {
 				onDisableMicrophone={() => setMicrophoneEnabled(false)}
 				devices={devices}
 				microphoneDeviceId={microphoneDeviceId}
-				selectedDeviceId={selectedDeviceId}
 				onSelectDevice={(deviceId) => {
 					setMicrophoneEnabled(true);
-					setSelectedDeviceId(deviceId);
 					setMicrophoneDeviceId(deviceId === "default" ? undefined : deviceId);
 				}}
 				trigger={
