@@ -28,7 +28,7 @@ await fs.writeFile(
 );
 let application;
 let browser;
-try {
+async function launchApp() {
 	const endpoint = new Promise((resolve, reject) => {
 		application = spawn(
 			path.join(appPath, "Contents/MacOS/recordly-gabriel"),
@@ -89,12 +89,30 @@ try {
 	const context = browser.contexts()[0];
 	await expect.poll(() => context.pages().length, { timeout: 20000 }).toBeGreaterThan(0);
 	const page = context.pages()[0];
+	await page.getByRole("radio", { name: "Settings", exact: true }).waitFor({ timeout: 20000 });
+	return page;
+}
+
+async function stopApp() {
+	if (browser) await browser.close().catch(() => {});
+	browser = undefined;
+	if (application && application.exitCode === null && application.signalCode === null) {
+		const exited = once(application, "exit");
+		const timer = setTimeout(() => application.kill("SIGKILL"), 5000);
+		application.kill("SIGTERM");
+		await exited;
+		clearTimeout(timer);
+	}
+	application = undefined;
+}
+
+try {
+	let page = await launchApp();
 	const errors = [];
 	page.on("pageerror", (error) => {
 		errors.push(error.message);
 		console.error("Packaged page error:", error.message);
 	});
-	await page.getByRole("radio", { name: "Settings", exact: true }).waitFor({ timeout: 20000 });
 	await expect
 		.poll(() => page.evaluate(() => typeof window.electronAPI?.getAppSetting), {
 			timeout: 15000,
@@ -201,17 +219,26 @@ try {
 	);
 	assert.deepEqual(errors, []);
 	await page.screenshot({ path: path.join(root, ".tmp/gabriel-packaged-ui.png") });
+	await stopApp();
+	page = await launchApp();
+	await page.getByRole("radio", { name: "Settings", exact: true }).click();
+	await page.getByRole("row", { name: "Sounds", exact: true }).click();
+	await expect(page.locator('button[aria-label="Mouse click sound"]')).toContainText("Smoke custom click");
+	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText("Better whoosh");
+	await expect(page.getByRole("slider", { name: "Whoosh volume", exact: true })).toHaveValue("1");
+	await expect(page.getByRole("slider", { name: "Mouse click volume", exact: true })).toHaveValue("0.6");
+	for (const [label, value] of [
+		["Small zoom in delay", -150],
+		["Small zoom out delay", 200],
+		["Large zoom in delay", 300],
+		["Large zoom out delay", -400],
+	]) {
+		await expect(page.getByRole("spinbutton", { name: `${label} value`, exact: true })).toHaveValue(String(value));
+	}
 	console.log(
-		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, independent click/whoosh volumes, click audio, whoosh delays and saved settings.",
+		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, independent click/whoosh volumes, click audio, whoosh delays and settings restored after app relaunch.",
 	);
 } finally {
-	if (browser) await browser.close().catch(() => {});
-	if (application && application.exitCode === null) {
-		const exited = once(application, "exit");
-		const timer = setTimeout(() => application.kill("SIGKILL"), 5000);
-		application.kill("SIGTERM");
-		await exited;
-		clearTimeout(timer);
-	}
+	await stopApp();
 	await fs.rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
