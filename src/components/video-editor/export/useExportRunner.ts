@@ -68,6 +68,7 @@ export function useExportRunner(input: ExportRunnerInput) {
 					clipRegions,
 					getTimelineDurationMs(clipRegions, duration * 1000),
 					appearance.mouseClickVolume,
+					appearance.zoomSoundEffects,
 				),
 			];
 			const {

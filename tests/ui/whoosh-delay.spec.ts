@@ -26,22 +26,18 @@ test("applies and reopens independent early and late whoosh delays", async ({ pa
 				JSON.parse(localStorage.getItem("recordly.editor.preferences") || "{}")
 					.zoomSoundEffects.delaysMs,
 		);
-	expect(await savedDelays()).toEqual({
-		smallZoomIn: 0,
-		smallZoomOut: 0,
-		largeZoomIn: 0,
-		largeZoomOut: 0,
-	});
-	await page.getByRole("button", { name: "Apply changes", exact: true }).click();
 	const expected = Object.fromEntries(assignments.map(([, key, value]) => [key, value]));
 	await expect.poll(savedDelays).toEqual(expected);
-	await expect(page.getByRole("button", { name: "Apply changes", exact: true })).toBeDisabled();
+	const typedDelay = page.getByRole("spinbutton", { name: "Small zoom in delay value" });
+	await typedDelay.fill("-280");
+	await typedDelay.press("Enter");
+	await expect.poll(savedDelays).toMatchObject({ smallZoomIn: -280 });
 	await page.reload();
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Settings", exact: true }).click();
 	await page.getByRole("row", { name: "Sounds", exact: true }).click();
 	for (const [label, , value] of assignments)
 		await expect(page.getByRole("slider", { name: label, exact: true })).toHaveValue(
-			String(value),
+			String(label === "Small zoom in delay" ? -280 : value),
 		);
 });

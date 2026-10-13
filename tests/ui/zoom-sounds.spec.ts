@@ -62,17 +62,6 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 	const volume = page.getByRole("slider", { name: "Whoosh volume" });
 	await volume.focus();
 	await page.keyboard.press("End");
-	const apply = page.getByRole("button", { name: "Apply changes", exact: true });
-	await expect(apply).toBeEnabled();
-	expect(
-		await page.evaluate(
-			() =>
-				JSON.parse(localStorage.getItem("recordly.editor.preferences") || "{}")
-					.zoomSoundEffects.smallZoomIn,
-		),
-	).toBe("dry-short-in");
-	await apply.click();
-	await expect(apply).toBeDisabled();
 	await expect
 		.poll(() =>
 			page.evaluate(
@@ -83,6 +72,8 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 		)
 		.toBe(1);
 	const saved = {
+		customSounds: [],
+		mouseClickSound: "default-click",
 		delaysMs: { smallZoomIn: 0, smallZoomOut: 0, largeZoomIn: 0, largeZoomOut: 0 },
 		smallZoomIn: "better",
 		smallZoomOut: "none",

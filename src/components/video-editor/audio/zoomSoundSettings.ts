@@ -1,3 +1,9 @@
+import {
+	type CustomSoundEffect,
+	type LocalSoundId,
+	normalizeCustomSoundEffects,
+} from "./customSoundEffects";
+
 /** Unique sounds supplied in the whooshes folder (one duplicate is omitted). */
 export const ZOOM_SOUND_LIBRARY = [
 	{
@@ -51,11 +57,14 @@ export const ZOOM_SOUND_LIBRARY = [
 ] as const;
 
 export type ZoomSoundId = (typeof ZOOM_SOUND_LIBRARY)[number]["id"];
-export type ZoomSoundChoice = ZoomSoundId | "none";
+export type ZoomSoundChoice = ZoomSoundId | LocalSoundId | "none";
+export type MouseClickSoundChoice = "default-click" | LocalSoundId | "none";
 export type ZoomSoundSize = "small" | "large";
 export type ZoomSoundSlot = "smallZoomIn" | "smallZoomOut" | "largeZoomIn" | "largeZoomOut";
 export const MAX_ZOOM_SOUND_DELAY_MS = 2000;
 export interface ZoomSoundEffects {
+	customSounds: CustomSoundEffect[];
+	mouseClickSound: MouseClickSoundChoice;
 	smallZoomIn: ZoomSoundChoice;
 	smallZoomOut: ZoomSoundChoice;
 	largeZoomIn: ZoomSoundChoice;
@@ -65,6 +74,8 @@ export interface ZoomSoundEffects {
 }
 
 export const DEFAULT_ZOOM_SOUND_EFFECTS: ZoomSoundEffects = {
+	customSounds: [],
+	mouseClickSound: "default-click",
 	smallZoomIn: "dry-short-in",
 	smallZoomOut: "dry-short-out",
 	largeZoomIn: "dry-short-in",
@@ -76,8 +87,11 @@ export const DEFAULT_ZOOM_SOUND_EFFECTS: ZoomSoundEffects = {
 export function normalizeZoomSoundEffects(candidate: unknown): ZoomSoundEffects {
 	const raw =
 		candidate && typeof candidate === "object" ? (candidate as Partial<ZoomSoundEffects>) : {};
+	const customSounds = normalizeCustomSoundEffects(raw.customSounds);
 	function choice(value: unknown, fallback: ZoomSoundChoice): ZoomSoundChoice {
-		return value === "none" || ZOOM_SOUND_LIBRARY.some((sound) => sound.id === value)
+		return value === "none" ||
+			ZOOM_SOUND_LIBRARY.some((sound) => sound.id === value) ||
+			customSounds.some((sound) => sound.id === value && sound.kind === "whoosh")
 			? (value as ZoomSoundChoice)
 			: fallback;
 	}
@@ -89,6 +103,13 @@ export function normalizeZoomSoundEffects(candidate: unknown): ZoomSoundEffects 
 			: 0;
 	}
 	return {
+		customSounds,
+		mouseClickSound:
+			raw.mouseClickSound === "none" ||
+			raw.mouseClickSound === "default-click" ||
+			customSounds.some((sound) => sound.id === raw.mouseClickSound && sound.kind === "click")
+				? (raw.mouseClickSound as MouseClickSoundChoice)
+				: "default-click",
 		smallZoomIn: choice(raw.smallZoomIn, DEFAULT_ZOOM_SOUND_EFFECTS.smallZoomIn),
 		smallZoomOut: choice(raw.smallZoomOut, DEFAULT_ZOOM_SOUND_EFFECTS.smallZoomOut),
 		largeZoomIn: choice(raw.largeZoomIn, DEFAULT_ZOOM_SOUND_EFFECTS.largeZoomIn),

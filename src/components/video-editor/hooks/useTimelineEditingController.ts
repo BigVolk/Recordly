@@ -122,12 +122,14 @@ export function useTimelineEditingController(input: Input) {
 				timeline.clipRegions,
 				projection.timelineDuration * 1000,
 				input.appearance.mouseClickVolume,
+				input.appearance.zoomSoundEffects,
 			),
 		[
 			cursor.effectiveCursorTelemetry,
 			timeline.clipRegions,
 			projection.timelineDuration,
 			input.appearance.mouseClickVolume,
+			input.appearance.zoomSoundEffects,
 		],
 	);
 	const playbackAudioRegions = useMemo(

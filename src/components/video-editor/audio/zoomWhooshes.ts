@@ -6,13 +6,12 @@ import {
 	getZoomRegionTiming,
 } from "../videoPlayback/zoomRegionUtils";
 
-import { resolveZoomSoundUrl } from "./zoomSoundAssets";
+import { getZoomSoundAsset } from "./zoomSoundAssets";
 import {
 	getZoomSoundChoice,
 	getZoomSoundSize,
 	getZoomSoundSlot,
 	normalizeZoomSoundEffects,
-	ZOOM_SOUND_LIBRARY,
 	type ZoomSoundEffects,
 } from "./zoomSoundSettings";
 
@@ -61,7 +60,7 @@ export function buildZoomWhooshRegions(
 		const size = getZoomSoundSize(fromScale, toScale, settings.largeZoomThreshold);
 		const soundId = getZoomSoundChoice(settings, direction, size);
 		if (soundId === "none") return;
-		const sound = ZOOM_SOUND_LIBRARY.find((candidate) => candidate.id === soundId);
+		const sound = getZoomSoundAsset(settings, soundId);
 		if (!sound) return;
 		const requestedStart =
 			Math.max(0, timeMs) + settings.delaysMs[getZoomSoundSlot(direction, size)];
@@ -73,7 +72,7 @@ export function buildZoomWhooshRegions(
 			startMs,
 			endMs,
 			...(requestedStart < 0 ? { sourceOffsetMs: -requestedStart } : {}),
-			audioPath: resolveZoomSoundUrl(sound.id),
+			audioPath: sound.path,
 			volume,
 		});
 	}

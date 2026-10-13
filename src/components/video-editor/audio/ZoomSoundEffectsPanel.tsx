@@ -11,8 +11,14 @@ import { toast } from "@/components/ui/toast";
 import { useScopedT } from "@/contexts/I18nContext";
 import { SliderControl } from "../SliderControl";
 import { DEFAULT_ZOOM_WHOOSH_VOLUME } from "../types";
-import { resolveZoomSoundUrl } from "./zoomSoundAssets";
-import { resolveMouseClickSoundUrl } from "./mouseClickSound";
+import { getZoomSoundAsset } from "./zoomSoundAssets";
+import { resolveMediaElementSource } from "@/lib/exporter/localMediaSource";
+import {
+	type CustomSoundEffect,
+	type SoundEffectKind,
+	mergeCustomSoundEffects,
+} from "./customSoundEffects";
+import { getMouseClickSoundAsset } from "./mouseClickSound";
 import {
 	DEFAULT_ZOOM_SOUND_EFFECTS,
 	MAX_ZOOM_SOUND_DELAY_MS,
@@ -20,6 +26,7 @@ import {
 	type ZoomSoundChoice,
 	type ZoomSoundEffects,
 	type ZoomSoundSlot,
+	type MouseClickSoundChoice,
 } from "./zoomSoundSettings";
 
 type SoundSlot = ZoomSoundSlot;
@@ -36,15 +43,24 @@ function ZoomSoundEffectsEditor({
 	settings,
 	onChange,
 	volume,
+	catalog,
+	onImport,
+	importing,
 }: {
 	settings: ZoomSoundEffects;
 	onChange: (settings: ZoomSoundEffects) => void;
 	volume: number;
+	catalog: CustomSoundEffect[];
+	onImport: () => void;
+	importing: boolean;
 }) {
 	const t = useScopedT("settings");
 	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const previewRequestRef = useRef(0);
 	const [previewing, setPreviewing] = useState<SoundSlot | null>(null);
+	const [delayInputs, setDelayInputs] = useState<Partial<Record<ZoomSoundSlot, string>>>({});
 	const stopPreview = useCallback(() => {
+		previewRequestRef.current += 1;
 		if (audioRef.current) {
 			audioRef.current.pause();
 			audioRef.current.src = "";
@@ -63,6 +79,7 @@ function ZoomSoundEffectsEditor({
 	}, [volume]);
 	useEffect(
 		() => () => {
+			previewRequestRef.current += 1;
 			audioRef.current?.pause();
 			if (audioRef.current) audioRef.current.src = "";
 			audioRef.current = null;
@@ -70,27 +87,41 @@ function ZoomSoundEffectsEditor({
 		[],
 	);
 
-	function preview(slot: SoundSlot) {
+	async function preview(slot: SoundSlot) {
 		const soundId = settings[slot];
 		const wasPlaying = previewing === slot;
 		stopPreview();
 		if (wasPlaying || soundId === "none") return;
-		const audio = new Audio(resolveZoomSoundUrl(soundId));
-		audio.dataset.zoomSoundId = soundId;
-		audio.volume = auditionVolume(volume);
-		audioRef.current = audio;
+		const sound = getZoomSoundAsset({ ...settings, customSounds: catalog }, soundId);
+		if (!sound) return;
+		const request = ++previewRequestRef.current;
 		setPreviewing(slot);
-		audio.onended = () => {
-			if (audioRef.current === audio) stopPreview();
-		};
-		audio.onerror = () => {
-			if (audioRef.current !== audio) return;
-			stopPreview();
-			toast.warning(t("audio.previewFailed", "Could not preview this sound."));
-		};
-		void audio.play().catch(() => {
-			if (audioRef.current === audio) stopPreview();
-		});
+		try {
+			const source = await resolveMediaElementSource(sound.path);
+			if (request !== previewRequestRef.current) {
+				source.revoke();
+				return;
+			}
+			const audio = new Audio(source.src);
+			audio.dataset.zoomSoundId = soundId;
+			audio.volume = auditionVolume(volume);
+			audioRef.current = audio;
+			audio.onended = () => {
+				if (audioRef.current === audio) stopPreview();
+			};
+			audio.onerror = () => {
+				if (audioRef.current === audio) {
+					stopPreview();
+					toast.warning(t("audio.previewFailed", "Could not preview this sound."));
+				}
+			};
+			await audio.play();
+		} catch {
+			if (request === previewRequestRef.current) {
+				stopPreview();
+				toast.warning(t("audio.previewFailed", "Could not preview this sound."));
+			}
+		}
 	}
 
 	return (
@@ -105,11 +136,20 @@ function ZoomSoundEffectsEditor({
 				<Button
 					variant="ghost"
 					size="sm"
-					onClick={() => onChange({ ...DEFAULT_ZOOM_SOUND_EFFECTS })}
+					onClick={() =>
+						onChange({
+							...DEFAULT_ZOOM_SOUND_EFFECTS,
+							customSounds: settings.customSounds,
+							mouseClickSound: settings.mouseClickSound,
+						})
+					}
 				>
 					{t("audio.resetSounds", "Reset sounds")}
 				</Button>
 			</div>
+			<Button variant="secondary" size="sm" disabled={importing} onClick={onImport}>
+				{t("audio.addWhooshes", "Add whoosh files…")}
+			</Button>
 			<p className="text-xs text-muted-foreground">
 				{t(
 					"audio.delayDescription",
@@ -145,6 +185,7 @@ function ZoomSoundEffectsEditor({
 											onValueChange={(value) =>
 												onChange({
 													...settings,
+													customSounds: catalog,
 													[slot]: value as ZoomSoundChoice,
 												})
 											}
@@ -162,6 +203,13 @@ function ZoomSoundEffectsEditor({
 														{sound.label}
 													</SelectItem>
 												))}
+												{catalog
+													.filter((sound) => sound.kind === "whoosh")
+													.map((sound) => (
+														<SelectItem key={sound.id} value={sound.id}>
+															{sound.name}
+														</SelectItem>
+													))}
 											</SelectContent>
 										</Select>
 										<Button
@@ -177,25 +225,82 @@ function ZoomSoundEffectsEditor({
 												: t("audio.previewSound", "Preview")}
 										</Button>
 									</div>
-									<SliderControl
-										label={t(
-											`audio.delay.${slot}`,
-											`${size === "small" ? "Small" : "Large"} zoom ${direction} delay`,
-										)}
-										value={settings.delaysMs[slot]}
-										min={-MAX_ZOOM_SOUND_DELAY_MS}
-										max={MAX_ZOOM_SOUND_DELAY_MS}
-										step={10}
-										onChange={(delay) =>
-											onChange({
-												...settings,
-												delaysMs: { ...settings.delaysMs, [slot]: delay },
-											})
-										}
-										formatValue={(delay) =>
-											`${delay > 0 ? "+" : ""}${delay} ms`
-										}
-									/>
+									<div className="flex items-end gap-2">
+										<SliderControl
+											label={t(
+												`audio.delay.${slot}`,
+												`${size === "small" ? "Small" : "Large"} zoom ${direction} delay`,
+											)}
+											value={settings.delaysMs[slot]}
+											min={-MAX_ZOOM_SOUND_DELAY_MS}
+											max={MAX_ZOOM_SOUND_DELAY_MS}
+											step={10}
+											onChange={(delay) =>
+												onChange({
+													...settings,
+													delaysMs: {
+														...settings.delaysMs,
+														[slot]: delay,
+													},
+												})
+											}
+											formatValue={(delay) =>
+												`${delay > 0 ? "+" : ""}${delay} ms`
+											}
+										/>
+										<div className="flex shrink-0 items-center gap-1 pb-2 text-xs">
+											<input
+												aria-label={`${size === "small" ? "Small" : "Large"} zoom ${direction} delay value`}
+												type="number"
+												min={-MAX_ZOOM_SOUND_DELAY_MS}
+												max={MAX_ZOOM_SOUND_DELAY_MS}
+												step={10}
+												value={
+													delayInputs[slot] ??
+													String(settings.delaysMs[slot])
+												}
+												onChange={(event) =>
+													setDelayInputs((current) => ({
+														...current,
+														[slot]: event.target.value,
+													}))
+												}
+												onBlur={() => {
+													const text = delayInputs[slot];
+													setDelayInputs((current) => ({
+														...current,
+														[slot]: undefined,
+													}));
+													if (
+														text == null ||
+														text.trim() === "" ||
+														!Number.isFinite(Number(text))
+													)
+														return;
+													const delay = Math.max(
+														-MAX_ZOOM_SOUND_DELAY_MS,
+														Math.min(
+															MAX_ZOOM_SOUND_DELAY_MS,
+															Math.round(Number(text)),
+														),
+													);
+													onChange({
+														...settings,
+														delaysMs: {
+															...settings.delaysMs,
+															[slot]: delay,
+														},
+													});
+												}}
+												onKeyDown={(event) => {
+													if (event.key === "Enter")
+														event.currentTarget.blur();
+												}}
+												className="w-20 rounded-md border border-separator bg-transparent px-2 py-1 text-right"
+											/>
+											<span>ms</span>
+										</div>
+									</div>
 								</div>
 							);
 						})}
@@ -240,71 +345,142 @@ export function ZoomSoundEffectsPanel({
 	onMouseClickVolumeChange: (volume: number) => void;
 }) {
 	const t = useScopedT("settings");
-	const [draft, setDraft] = useState(() => ({ ...settings }));
-	const [draftVolume, setDraftVolume] = useState(volume);
-	const [draftClickVolume, setDraftClickVolume] = useState(mouseClickVolume);
 	const clickAudioRef = useRef<HTMLAudioElement | null>(null);
+	const clickPreviewRequestRef = useRef(0);
+	const [library, setLibrary] = useState<CustomSoundEffect[]>([]);
+	const [importing, setImporting] = useState<SoundEffectKind | null>(null);
+	const catalog = mergeCustomSoundEffects(settings.customSounds, library);
+	useEffect(() => {
+		let disposed = false;
+		void window.electronAPI
+			?.getSoundEffectLibrary?.()
+			.then((result) => {
+				if (!disposed && result.success) setLibrary(result.sounds);
+			})
+			.catch(() => toast.warning("Could not load the imported sound library."));
+		return () => {
+			disposed = true;
+		};
+	}, []);
+	async function importSounds(kind: SoundEffectKind) {
+		setImporting(kind);
+		try {
+			const result = await window.electronAPI.importSoundEffects(kind);
+			if (result.canceled) return;
+			if (result.sounds?.length) {
+				const sounds = result.sounds;
+				setLibrary((current) => mergeCustomSoundEffects(current, sounds));
+				onChange({
+					...settings,
+					customSounds: mergeCustomSoundEffects(settings.customSounds, library, sounds),
+					...(kind === "click" ? { mouseClickSound: sounds[0].id } : {}),
+				});
+			}
+			if (result.errors?.length) toast.warning(result.errors.join("\n"));
+			else if (!result.success)
+				toast.warning(result.message || "Could not import sound files.");
+		} catch {
+			toast.warning("Could not import sound files.");
+		} finally {
+			setImporting(null);
+		}
+	}
+	async function previewClick() {
+		clickAudioRef.current?.pause();
+		const request = ++clickPreviewRequestRef.current;
+		const sound = getMouseClickSoundAsset({ ...settings, customSounds: catalog });
+		if (!sound) return;
+		try {
+			const source = await resolveMediaElementSource(sound.path);
+			if (request !== clickPreviewRequestRef.current) {
+				source.revoke();
+				return;
+			}
+			const audio = new Audio(source.src);
+			audio.volume = mouseClickVolume;
+			clickAudioRef.current = audio;
+			audio.onerror = () =>
+				toast.warning(t("audio.previewFailed", "Could not preview this sound."));
+			await audio.play();
+		} catch {
+			if (request === clickPreviewRequestRef.current)
+				toast.warning(t("audio.previewFailed", "Could not preview this sound."));
+		}
+	}
 	useEffect(
 		() => () => {
+			clickPreviewRequestRef.current += 1;
 			clickAudioRef.current?.pause();
 			if (clickAudioRef.current) clickAudioRef.current.src = "";
 		},
 		[],
 	);
 	useEffect(() => {
-		setDraft({ ...settings });
-		setDraftVolume(volume);
-		setDraftClickVolume(mouseClickVolume);
-	}, [settings, volume, mouseClickVolume]);
-	const hasChanges =
-		draftClickVolume !== mouseClickVolume ||
-		draftVolume !== volume ||
-		(Object.keys(settings) as (keyof ZoomSoundEffects)[]).some((key) =>
-			key === "delaysMs"
-				? (Object.keys(settings.delaysMs) as SoundSlot[]).some(
-						(slot) => draft.delaysMs[slot] !== settings.delaysMs[slot],
-					)
-				: draft[key] !== settings[key],
-		);
+		clickPreviewRequestRef.current += 1;
+		clickAudioRef.current?.pause();
+	}, [settings.mouseClickSound]);
+
 	return (
 		<div className="flex flex-col gap-5">
-			<div className="flex flex-col gap-2">
-				<Button
-					disabled={!hasChanges}
-					onClick={() => {
-						onChange({ ...draft });
-						onVolumeChange(draftVolume);
-						onMouseClickVolumeChange(draftClickVolume);
-					}}
-				>
-					{t("audio.applyChanges", "Apply changes")}
-				</Button>
-				<p role="status" className="text-xs text-muted-foreground">
-					{hasChanges
-						? t(
-								"audio.unappliedChanges",
-								"Unapplied changes. Apply to update playback and exports.",
-							)
-						: t("audio.changesApplied", "Your sound settings are applied.")}
-				</p>
-			</div>
 			<SliderControl
 				label={t("audio.whooshVolume", "Whoosh volume")}
-				value={draftVolume}
+				value={volume}
 				min={0}
 				max={1}
 				step={0.01}
-				onChange={setDraftVolume}
+				onChange={onVolumeChange}
 				formatValue={(value) => `${Math.round(value * 100)}%`}
 			/>
+			<p className="text-xs text-muted-foreground">
+				{t(
+					"audio.importDescription",
+					"Add local audio files up to 60 seconds long. Files are copied into your sound library. Changes take effect immediately.",
+				)}
+			</p>
 			<section className="flex flex-col gap-2" aria-label="Mouse click sounds">
+				<Select
+					aria-label="Mouse click sound"
+					value={settings.mouseClickSound}
+					onValueChange={(value) =>
+						onChange({
+							...settings,
+							customSounds: catalog,
+							mouseClickSound: value as MouseClickSoundChoice,
+						})
+					}
+				>
+					<SelectTrigger aria-label="Mouse click sound">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="default-click">
+							{t("audio.defaultClick", "Default mouse click")}
+						</SelectItem>
+						<SelectItem value="none">{t("audio.noSound", "No sound")}</SelectItem>
+						{catalog
+							.filter((sound) => sound.kind === "click")
+							.map((sound) => (
+								<SelectItem key={sound.id} value={sound.id}>
+									{sound.name}
+								</SelectItem>
+							))}
+					</SelectContent>
+				</Select>
+				<Button
+					variant="secondary"
+					size="sm"
+					disabled={importing !== null}
+					onClick={() => void importSounds("click")}
+				>
+					{t("audio.addClicks", "Add mouse click files…")}
+				</Button>
 				<SliderControl
 					label={t("audio.mouseClickVolume", "Mouse click volume")}
-					value={draftClickVolume}
+					value={mouseClickVolume}
 					min={0}
 					max={1}
 					step={0.01}
-					onChange={setDraftClickVolume}
+					onChange={onMouseClickVolumeChange}
 					formatValue={(value) => `${Math.round(value * 100)}%`}
 				/>
 				<p className="text-xs text-muted-foreground">
@@ -317,25 +493,20 @@ export function ZoomSoundEffectsPanel({
 					variant="secondary"
 					size="sm"
 					aria-label="Preview mouse click sound"
-					disabled={draftClickVolume === 0}
-					onClick={() => {
-						clickAudioRef.current?.pause();
-						const audio = new Audio(resolveMouseClickSoundUrl());
-						audio.volume = draftClickVolume;
-						clickAudioRef.current = audio;
-						void audio
-							.play()
-							.catch(() =>
-								toast.warning(
-									t("audio.previewFailed", "Could not preview this sound."),
-								),
-							);
-					}}
+					disabled={mouseClickVolume === 0 || settings.mouseClickSound === "none"}
+					onClick={() => void previewClick()}
 				>
 					{t("audio.previewSound", "Preview")}
 				</Button>
 			</section>
-			<ZoomSoundEffectsEditor settings={draft} onChange={setDraft} volume={draftVolume} />
+			<ZoomSoundEffectsEditor
+				settings={settings}
+				onChange={onChange}
+				volume={volume}
+				catalog={catalog}
+				importing={importing !== null}
+				onImport={() => void importSounds("whoosh")}
+			/>
 		</div>
 	);
 }

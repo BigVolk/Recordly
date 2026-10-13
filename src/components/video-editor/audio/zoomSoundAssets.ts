@@ -6,7 +6,12 @@ import sound1Url from "../../../../whooshes/ES_Swooshes, Whoosh, Short, Dry 01 -
 import sound7Url from "../../../../whooshes/ES_Swooshes, Whoosh, Short, Engine, Dry - Epidemic Sound.wav?url";
 import sound5Url from "../../../../whooshes/ES_Swooshes, Whoosh, Short, Mid Low Freq - Epidemic Sound.wav?url";
 import sound6Url from "../../../../whooshes/ES_Swooshes, Whoosh, Short, Mid Tonal Bass - Epidemic Sound - 0000-0992.wav?url";
-import type { ZoomSoundId } from "./zoomSoundSettings";
+import {
+	type ZoomSoundId,
+	type ZoomSoundChoice,
+	type ZoomSoundEffects,
+	ZOOM_SOUND_LIBRARY,
+} from "./zoomSoundSettings";
 
 const soundUrls: Record<ZoomSoundId, string> = {
 	"dry-short-in": sound0Url,
@@ -25,4 +30,13 @@ export function resolveZoomSoundUrl(soundId: ZoomSoundId) {
 	// Bundled assets live beside index.html in packaged Electron windows.
 	const relativeUrl = assetUrl.startsWith("/") ? `.${assetUrl}` : assetUrl;
 	return new URL(relativeUrl, window.location.href).href;
+}
+
+export function getZoomSoundAsset(settings: ZoomSoundEffects, choice: ZoomSoundChoice) {
+	const bundled = ZOOM_SOUND_LIBRARY.find((sound) => sound.id === choice);
+	if (bundled) return { path: resolveZoomSoundUrl(bundled.id), durationMs: bundled.durationMs };
+	const custom = settings.customSounds.find(
+		(sound) => sound.id === choice && sound.kind === "whoosh",
+	);
+	return custom ? { path: custom.path, durationMs: custom.durationMs } : undefined;
 }

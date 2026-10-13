@@ -9,6 +9,7 @@ import { registerProjectHandlers } from "./register/project";
 import { registerRecordingHandlers } from "./register/recording";
 import { registerSettingsHandlers } from "./register/settings";
 import { registerSourceHandlers } from "./register/sources";
+import { registerSoundEffectHandlers } from "./register/soundEffects";
 import {
 	selectedSource,
 	setNativeScreenRecordingActive,
@@ -70,6 +71,7 @@ export function registerIpcHandlers(
 	registerAssetHandlers();
 	registerExportHandlers();
 	registerCaptionHandlers();
+	registerSoundEffectHandlers();
 	registerCloudShareHandlers();
 	registerProjectHandlers();
 	registerSettingsHandlers();

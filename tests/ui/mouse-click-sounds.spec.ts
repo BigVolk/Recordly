@@ -28,8 +28,6 @@ test("click and whoosh sliders apply independently and preview the click asset",
 		page.evaluate(() =>
 			JSON.parse(localStorage.getItem("recordly.editor.preferences") || "{}"),
 		);
-	expect((await preferences()).mouseClickVolume).toBe(0.35);
-	await page.getByRole("button", { name: "Apply changes", exact: true }).click();
 	await expect.poll(preferences).toMatchObject({ zoomWhooshVolume: 0, mouseClickVolume: 1 });
 	await page.getByRole("button", { name: "Preview mouse click sound", exact: true }).click();
 	await expect
@@ -57,7 +55,6 @@ test("click and whoosh sliders apply independently and preview the click asset",
 	await expect(
 		page.getByRole("button", { name: "Preview mouse click sound", exact: true }),
 	).toBeDisabled();
-	await page.getByRole("button", { name: "Apply changes", exact: true }).click();
 	await expect.poll(preferences).toMatchObject({ zoomWhooshVolume: 0, mouseClickVolume: 0 });
 	await page.screenshot({ path: "test-results/mouse-click-sounds.png" });
 });

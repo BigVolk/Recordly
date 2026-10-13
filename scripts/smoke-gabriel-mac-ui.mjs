@@ -15,6 +15,17 @@ await fs.writeFile(
 	path.join(profile, "app-settings.json"),
 	JSON.stringify({ "recordly.onboarding.v1.seen": true }),
 );
+const customDirectory = path.join(profile, "sound-effects");
+await fs.mkdir(customDirectory, { recursive: true });
+const customClickId = "22222222-2222-4222-8222-222222222222";
+await fs.copyFile(
+	path.join(root, "src/assets/sounds/mouse-click.wav"),
+	path.join(customDirectory, `${customClickId}.wav`),
+);
+await fs.writeFile(
+	path.join(customDirectory, "library.json"),
+	JSON.stringify([{ id: `local:${customClickId}`, name: "Smoke custom click", kind: "click", path: path.join(customDirectory, `${customClickId}.wav`), durationMs: 100 }]),
+);
 let application;
 let browser;
 try {
@@ -92,22 +103,13 @@ try {
 	assert.equal(await page.evaluate(() => window.electronAPI.getPlatform()), "darwin");
 	await page.getByRole("radio", { name: "Settings", exact: true }).click({ timeout: 20000 });
 	await page.getByRole("row", { name: "Sounds", exact: true }).click();
-	const apply = page.getByRole("button", { name: "Apply changes", exact: true });
-	assert.equal(await apply.isDisabled(), true);
+	assert.equal((await page.evaluate(() => window.electronAPI.getSoundEffectLibrary())).sounds[0].name, "Smoke custom click");
+	await page.locator('button[aria-label="Mouse click sound"]').click();
+	await page.getByRole("listbox", { name: "Mouse click sound" }).getByRole("option", { name: "Smoke custom click" }).click();
+	await expect.poll(() => page.evaluate(() => window.electronAPI.getAppSetting("recordly.editor.preferences")?.zoomSoundEffects?.mouseClickSound)).toBe(`local:${customClickId}`);
 	await page.getByRole("button", { name: /Small zoom in sound$/ }).click();
-	await page
-		.getByRole("listbox", { name: "Small zoom in sound", exact: true })
-		.getByRole("option", { name: "Better whoosh", exact: true })
-		.click();
-	assert.equal(await apply.isEnabled(), true);
-	assert.equal(
-		await page.evaluate(
-			() =>
-				window.electronAPI.getAppSetting("recordly.editor.preferences")?.zoomSoundEffects
-					?.smallZoomIn,
-		),
-		"dry-short-in",
-	);
+	await page.getByRole("listbox", { name: "Small zoom in sound", exact: true })
+		.getByRole("option", { name: "Better whoosh", exact: true }).click();
 	const volume = page.getByRole("slider", { name: "Whoosh volume", exact: true });
 	await volume.focus();
 	await page.keyboard.press("End");
@@ -132,7 +134,6 @@ try {
 		for (let i = 0; i < Math.abs(value / 10); i++)
 			await page.keyboard.press(value < 0 ? "ArrowLeft" : "ArrowRight");
 	}
-	await apply.click();
 	await expect
 		.poll(() =>
 			page.evaluate(
@@ -142,7 +143,6 @@ try {
 			),
 		)
 		.toBe("better");
-	assert.equal(await apply.isDisabled(), true);
 	assert.equal(
 		await page.evaluate(
 			() => window.electronAPI.getAppSetting("recordly.editor.preferences")?.zoomWhooshVolume,
@@ -202,7 +202,7 @@ try {
 	assert.deepEqual(errors, []);
 	await page.screenshot({ path: path.join(root, ".tmp/gabriel-packaged-ui.png") });
 	console.log(
-		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, independent click/whoosh volumes, click audio, whoosh delays, Apply, and saved settings.",
+		"Packaged UI smoke passed: desktop bridge, styled text, sound selection, independent click/whoosh volumes, click audio, whoosh delays and saved settings.",
 	);
 } finally {
 	if (browser) await browser.close().catch(() => {});

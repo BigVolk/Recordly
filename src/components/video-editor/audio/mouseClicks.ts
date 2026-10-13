@@ -6,7 +6,12 @@ import {
 	getClipSourceEndMs,
 	getClipSourceStartMs,
 } from "../types";
-import { MOUSE_CLICK_DURATION_MS, resolveMouseClickSoundUrl } from "./mouseClickSound";
+import { getMouseClickSoundAsset } from "./mouseClickSound";
+import {
+	type ZoomSoundEffects,
+	DEFAULT_ZOOM_SOUND_EFFECTS,
+	normalizeZoomSoundEffects,
+} from "./zoomSoundSettings";
 
 const clickTypes = new Set(["click", "double-click", "right-click", "middle-click"]);
 
@@ -16,12 +21,15 @@ export function buildMouseClickRegions(
 	clips: ClipRegion[],
 	timelineDurationMs: number,
 	configuredVolume = DEFAULT_MOUSE_CLICK_VOLUME,
+	soundSettings: ZoomSoundEffects = DEFAULT_ZOOM_SOUND_EFFECTS,
 ): AudioRegion[] {
 	if (!Number.isFinite(timelineDurationMs) || timelineDurationMs <= 0) return [];
 	const volume = Number.isFinite(configuredVolume)
 		? Math.max(0, Math.min(1, configuredVolume))
 		: DEFAULT_MOUSE_CLICK_VOLUME;
 	if (volume === 0) return [];
+	const sound = getMouseClickSoundAsset(normalizeZoomSoundEffects(soundSettings));
+	if (!sound) return [];
 	const clickTimes = [
 		...new Set(
 			telemetry
@@ -55,8 +63,8 @@ export function buildMouseClickRegions(
 			regions.push({
 				id: `mouse-click:${clip.id}:${timeMs}`,
 				startMs,
-				endMs: Math.min(startMs + MOUSE_CLICK_DURATION_MS, clip.endMs, timelineDurationMs),
-				audioPath: resolveMouseClickSoundUrl(),
+				endMs: Math.min(startMs + sound.durationMs, clip.endMs, timelineDurationMs),
+				audioPath: sound.path,
 				volume,
 			});
 		}

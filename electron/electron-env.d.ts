@@ -684,6 +684,20 @@ interface Window {
 			error?: string;
 		}>;
 		openAudioFilePicker: () => Promise<{ success: boolean; path?: string; canceled?: boolean }>;
+		getSoundEffectLibrary: () => Promise<{
+			success: boolean;
+			sounds: import("../src/components/video-editor/audio/customSoundEffects").CustomSoundEffect[];
+			message?: string;
+		}>;
+		importSoundEffects: (
+			kind: "whoosh" | "click",
+		) => Promise<{
+			success: boolean;
+			canceled?: boolean;
+			sounds?: import("../src/components/video-editor/audio/customSoundEffects").CustomSoundEffect[];
+			errors?: string[];
+			message?: string;
+		}>;
 		openWhisperExecutablePicker: () => Promise<{
 			success: boolean;
 			path?: string;
