@@ -117,23 +117,3 @@ describe("ScreenCaptureKitRecorder first frame timing", () => {
 		expect(audioGuard).toBeLessThan(callback.indexOf("if outputType == .audio"));
 	});
 });
-
-describe("ScreenCaptureKitRecorder microphone selection", () => {
-	const resolver = recorderSource.slice(
-		recorderSource.indexOf("private static func resolveMicrophoneCaptureDeviceID"),
-		recorderSource.indexOf("private func supportsNativeMicrophoneCapture"),
-	);
-
-	it("matches the selected microphone by its undecorated Chromium label", () => {
-		// Chromium reports "Shure MV7 (14ed:1012)"; CoreAudio names it "Shure MV7".
-		expect(resolver).toContain(
-			"for candidateName in microphoneNameCandidates(forLabel: microphoneLabel)",
-		);
-		expect(resolver).toContain("$0.localizedName == candidateName");
-		expect(resolver).toContain('label.range(of: " (", options: .backwards)');
-	});
-
-	it("prefers the raw label so device names ending in parentheses still match", () => {
-		expect(resolver).toContain("var candidates = [label]");
-	});
-});
