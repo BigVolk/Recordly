@@ -858,8 +858,10 @@ final class ScreenCaptureRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
 		let audioDevices = AVCaptureDevice.devices(for: .audio)
 
 		if let microphoneLabel = config.microphoneLabel?.trimmingCharacters(in: .whitespacesAndNewlines), !microphoneLabel.isEmpty {
-			if let matchedDevice = audioDevices.first(where: { $0.localizedName == microphoneLabel }) {
-				return matchedDevice.uniqueID
+			for candidateName in microphoneNameCandidates(forLabel: microphoneLabel) {
+				if let matchedDevice = audioDevices.first(where: { $0.localizedName == candidateName }) {
+					return matchedDevice.uniqueID
+				}
 			}
 		}
 
@@ -870,6 +872,22 @@ final class ScreenCaptureRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
 		}
 
 		return nil
+	}
+
+	/// The label comes from Chromium's `enumerateDevices()`, which appends a
+	/// transport suffix to the CoreAudio name — "Shure MV7 (14ed:1012)",
+	/// "MacBook Pro Microphone (Built-in)", "BlackHole 16ch (Virtual)" — so it
+	/// rarely equals `localizedName` as-is.  Without the undecorated candidate the
+	/// selection is silently ignored and the system default input is recorded.
+	private static func microphoneNameCandidates(forLabel label: String) -> [String] {
+		var candidates = [label]
+		if label.hasSuffix(")"), let suffixStart = label.range(of: " (", options: .backwards) {
+			let undecoratedName = label[..<suffixStart.lowerBound].trimmingCharacters(in: .whitespaces)
+			if !undecoratedName.isEmpty {
+				candidates.append(undecoratedName)
+			}
+		}
+		return candidates
 	}
 
 	private func supportsNativeMicrophoneCapture(streamConfig: SCStreamConfiguration) -> Bool {
