@@ -628,9 +628,7 @@ export class FrameRenderer {
 		// "Cannot read properties of undefined (reading '_resourceType')", which is only
 		// recoverable by restarting the whole export on a different backend.
 		const backendOrder: ExportRenderBackend[] =
-			preferredRenderBackend === "webgpu"
-				? ["webgpu", "webgl"]
-				: ["webgl", "webgpu"];
+			preferredRenderBackend === "webgpu" ? ["webgpu", "webgl"] : ["webgl", "webgpu"];
 		const failures: PixiRendererAttempt[] = [];
 
 		for (const backend of backendOrder) {

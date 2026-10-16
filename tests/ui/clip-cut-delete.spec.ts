@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { installDesktopBridge } from "./bridge";
 
-test.use({ channel: process.env.RECORDLY_TEST_BROWSER_CHANNEL === "chrome" ? "chrome" : undefined });
+test.use({
+	channel: process.env.RECORDLY_TEST_BROWSER_CHANNEL === "chrome" ? "chrome" : undefined,
+});
 
 test("two cuts select the middle clip for deletion", async ({ page }) => {
 	test.setTimeout(45_000);
@@ -10,7 +12,9 @@ test("two cuts select the middle clip for deletion", async ({ page }) => {
 	const clips = page.locator('[data-variant="clip"]');
 	await expect(clips).toHaveCount(1, { timeout: 20_000 });
 	const firstClip = await clips.first().boundingBox();
-	const timeline = page.locator(".select-none.bg-editor-bg.relative.cursor-pointer.group.flex.flex-col").last();
+	const timeline = page
+		.locator(".select-none.bg-editor-bg.relative.cursor-pointer.group.flex.flex-col")
+		.last();
 	const canvas = await timeline.boundingBox();
 	if (!firstClip || !canvas) throw new Error("Timeline is not visible");
 

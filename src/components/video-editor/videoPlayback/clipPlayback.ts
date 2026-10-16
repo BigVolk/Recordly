@@ -121,7 +121,8 @@ export function createClipPlayback({
 					video.currentTime = target;
 				}
 			}
-			if (playing && (startSource || seek || clip !== activeClip) && !video.seeking) playSource();
+			if (playing && (startSource || seek || clip !== activeClip) && !video.seeking)
+				playSource();
 		} else {
 			playRequest++;
 			video.pause();
