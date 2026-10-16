@@ -8,6 +8,27 @@ import {
 } from "./zoomSoundSettings";
 
 describe("zoom sound settings", () => {
+	it("restores scroll direction, size, volume and signed delays", () => {
+		expect(
+			normalizeZoomSoundEffects({
+				scrollSounds: {
+					...DEFAULT_ZOOM_SOUND_EFFECTS.scrollSounds,
+					largeScrollDown: "none",
+				},
+				scrollDelaysMs: {
+					...DEFAULT_ZOOM_SOUND_EFFECTS.scrollDelaysMs,
+					smallScrollUp: -175,
+				},
+				scrollLargeThreshold: 5,
+				scrollVolume: 0.42,
+			}),
+		).toMatchObject({
+			scrollSounds: { largeScrollDown: "none" },
+			scrollDelaysMs: { smallScrollUp: -175 },
+			scrollLargeThreshold: 5,
+			scrollVolume: 0.42,
+		});
+	});
 	it("normalizes independent signed delays and migrates missing or invalid values", () => {
 		expect(
 			normalizeZoomSoundEffects({ delaysMs: { smallZoomIn: -150, largeZoomOut: 320 } })

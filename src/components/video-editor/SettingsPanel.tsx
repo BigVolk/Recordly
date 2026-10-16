@@ -2264,26 +2264,6 @@ export function SettingsPanel({
 		</section>
 	);
 
-	const whooshVolumeControl = (
-		<div className="flex flex-col gap-1">
-			<SliderControl
-				label={tSettings("audio.whooshVolume", "Whoosh volume")}
-				value={zoomWhooshVolume}
-				min={0}
-				max={1}
-				step={0.01}
-				onChange={(value) => onZoomWhooshVolumeChange?.(value)}
-				formatValue={(value) => `${Math.round(value * 100)}%`}
-			/>
-			<p className="text-xs text-muted-foreground">
-				{tSettings(
-					"audio.whooshVolumeDescription",
-					"Applies to all zoom sounds. Set to 0% to mute.",
-				)}
-			</p>
-		</div>
-	);
-
 	const effectSectionContent = (() => {
 		const settingsSectionContent = (
 			<SettingsSections
@@ -2381,7 +2361,6 @@ export function SettingsPanel({
 					/>
 				</SettingsCategory>
 				<SettingsCategory category="motion">
-					{whooshVolumeControl}
 					<section className="flex flex-col gap-6">
 						<SettingsRow
 							title={tSettings(
@@ -2625,7 +2604,6 @@ export function SettingsPanel({
 
 		const zoomItemSectionContent = (
 			<section className="flex flex-col gap-4">
-				{whooshVolumeControl}
 				{selectedZoomId && (
 					<>
 						<SectionLabel>{tSettings("zoom.mode", "Mode")}</SectionLabel>

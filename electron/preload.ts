@@ -722,7 +722,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		return ipcRenderer.invoke("open-audio-file-picker");
 	},
 	getSoundEffectLibrary: () => ipcRenderer.invoke("get-sound-effect-library"),
-	importSoundEffects: (kind: "whoosh" | "click") =>
+	importSoundEffects: (kind: "whoosh" | "click" | "scroll") =>
 		ipcRenderer.invoke("import-sound-effects", kind),
 	openWhisperExecutablePicker: () => {
 		return ipcRenderer.invoke("open-whisper-executable-picker");

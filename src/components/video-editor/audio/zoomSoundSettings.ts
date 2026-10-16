@@ -59,12 +59,22 @@ export const ZOOM_SOUND_LIBRARY = [
 export type ZoomSoundId = (typeof ZOOM_SOUND_LIBRARY)[number]["id"];
 export type ZoomSoundChoice = ZoomSoundId | LocalSoundId | "none";
 export type MouseClickSoundChoice = "default-click" | LocalSoundId | "none";
+export type ScrollSoundChoice = "default-scroll" | LocalSoundId | "none";
+export type ScrollSoundSlot =
+	| "smallScrollUp"
+	| "smallScrollDown"
+	| "largeScrollUp"
+	| "largeScrollDown";
 export type ZoomSoundSize = "small" | "large";
 export type ZoomSoundSlot = "smallZoomIn" | "smallZoomOut" | "largeZoomIn" | "largeZoomOut";
 export const MAX_ZOOM_SOUND_DELAY_MS = 2000;
 export interface ZoomSoundEffects {
 	customSounds: CustomSoundEffect[];
 	mouseClickSound: MouseClickSoundChoice;
+	scrollSounds: Record<ScrollSoundSlot, ScrollSoundChoice>;
+	scrollDelaysMs: Record<ScrollSoundSlot, number>;
+	scrollLargeThreshold: number;
+	scrollVolume: number;
 	smallZoomIn: ZoomSoundChoice;
 	smallZoomOut: ZoomSoundChoice;
 	largeZoomIn: ZoomSoundChoice;
@@ -76,6 +86,15 @@ export interface ZoomSoundEffects {
 export const DEFAULT_ZOOM_SOUND_EFFECTS: ZoomSoundEffects = {
 	customSounds: [],
 	mouseClickSound: "default-click",
+	scrollSounds: {
+		smallScrollUp: "default-scroll",
+		smallScrollDown: "default-scroll",
+		largeScrollUp: "default-scroll",
+		largeScrollDown: "default-scroll",
+	},
+	scrollDelaysMs: { smallScrollUp: 0, smallScrollDown: 0, largeScrollUp: 0, largeScrollDown: 0 },
+	scrollLargeThreshold: 3,
+	scrollVolume: 0.3,
 	smallZoomIn: "dry-short-in",
 	smallZoomOut: "dry-short-out",
 	largeZoomIn: "dry-short-in",
@@ -96,6 +115,36 @@ export function normalizeZoomSoundEffects(candidate: unknown): ZoomSoundEffects 
 			: fallback;
 	}
 	const rawDelays = raw.delaysMs && typeof raw.delaysMs === "object" ? raw.delaysMs : {};
+	const scrollSlots: ScrollSoundSlot[] = [
+		"smallScrollUp",
+		"smallScrollDown",
+		"largeScrollUp",
+		"largeScrollDown",
+	];
+	const scrollSounds = Object.fromEntries(
+		scrollSlots.map((slot) => {
+			const value = raw.scrollSounds?.[slot];
+			return [
+				slot,
+				value === "none" ||
+				value === "default-scroll" ||
+				customSounds.some((sound) => sound.kind === "scroll" && sound.id === value)
+					? value
+					: "default-scroll",
+			];
+		}),
+	) as Record<ScrollSoundSlot, ScrollSoundChoice>;
+	const scrollDelaysMs = Object.fromEntries(
+		scrollSlots.map((slot) => {
+			const value = raw.scrollDelaysMs?.[slot];
+			return [
+				slot,
+				typeof value === "number" && Number.isFinite(value)
+					? Math.max(-MAX_ZOOM_SOUND_DELAY_MS, Math.min(MAX_ZOOM_SOUND_DELAY_MS, value))
+					: 0,
+			];
+		}),
+	) as Record<ScrollSoundSlot, number>;
 	function delay(slot: ZoomSoundSlot): number {
 		const value = (rawDelays as Partial<Record<ZoomSoundSlot, unknown>>)[slot];
 		return typeof value === "number" && Number.isFinite(value)
@@ -104,6 +153,17 @@ export function normalizeZoomSoundEffects(candidate: unknown): ZoomSoundEffects 
 	}
 	return {
 		customSounds,
+		scrollSounds,
+		scrollDelaysMs,
+		scrollLargeThreshold:
+			typeof raw.scrollLargeThreshold === "number" &&
+			Number.isFinite(raw.scrollLargeThreshold)
+				? Math.max(1, Math.min(20, raw.scrollLargeThreshold))
+				: 3,
+		scrollVolume:
+			typeof raw.scrollVolume === "number" && Number.isFinite(raw.scrollVolume)
+				? Math.max(0, Math.min(1, raw.scrollVolume))
+				: 0.3,
 		mouseClickSound:
 			raw.mouseClickSound === "none" ||
 			raw.mouseClickSound === "default-click" ||

@@ -5,6 +5,7 @@ import { DEFAULT_MP4_CODEC } from "@/lib/exporter/mp4Support";
 import type { ExportSettings } from "@/lib/exporter/types";
 import { buildZoomWhooshRegions } from "../audio/zoomWhooshes";
 import { buildMouseClickRegions } from "../audio/mouseClicks";
+import { buildScrollSoundRegions } from "../audio/scrollSounds";
 import { calculateMp4ExportDimensions, capMp4ShareDimensions } from "../exportDimensions";
 import { resolveMp4ExportRouting } from "../mp4ExportRouting";
 import { resolveMp4ExportSettings } from "../mp4ExportSettings";
@@ -68,6 +69,12 @@ export function useExportRunner(input: ExportRunnerInput) {
 					clipRegions,
 					getTimelineDurationMs(clipRegions, duration * 1000),
 					appearance.mouseClickVolume,
+					appearance.zoomSoundEffects,
+				),
+				...buildScrollSoundRegions(
+					effectiveCursorTelemetry,
+					clipRegions,
+					getTimelineDurationMs(clipRegions, duration * 1000),
 					appearance.zoomSoundEffects,
 				),
 			];

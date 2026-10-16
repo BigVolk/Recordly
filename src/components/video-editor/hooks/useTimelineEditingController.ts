@@ -6,6 +6,7 @@ import type { useShortcuts } from "@/contexts/ShortcutsContext";
 import { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
 import { buildZoomWhooshRegions } from "../audio/zoomWhooshes";
 import { buildMouseClickRegions } from "../audio/mouseClicks";
+import { buildScrollSoundRegions } from "../audio/scrollSounds";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
@@ -132,9 +133,29 @@ export function useTimelineEditingController(input: Input) {
 			input.appearance.zoomSoundEffects,
 		],
 	);
+	const scrollSoundRegions = useMemo(
+		() =>
+			buildScrollSoundRegions(
+				cursor.effectiveCursorTelemetry,
+				timeline.clipRegions,
+				projection.timelineDuration * 1000,
+				input.appearance.zoomSoundEffects,
+			),
+		[
+			cursor.effectiveCursorTelemetry,
+			timeline.clipRegions,
+			projection.timelineDuration,
+			input.appearance.zoomSoundEffects,
+		],
+	);
 	const playbackAudioRegions = useMemo(
-		() => [...timeline.audioRegions, ...zoomWhooshRegions, ...mouseClickRegions],
-		[timeline.audioRegions, zoomWhooshRegions, mouseClickRegions],
+		() => [
+			...timeline.audioRegions,
+			...zoomWhooshRegions,
+			...mouseClickRegions,
+			...scrollSoundRegions,
+		],
+		[timeline.audioRegions, zoomWhooshRegions, mouseClickRegions, scrollSoundRegions],
 	);
 
 	const audio = useVideoEditorAudio({

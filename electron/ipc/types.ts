@@ -97,13 +97,16 @@ export type CursorInteractionType =
 	| "double-click"
 	| "right-click"
 	| "middle-click"
-	| "mouseup";
+	| "mouseup"
+	| "scroll-up"
+	| "scroll-down";
 
 export interface CursorTelemetryPoint {
 	timeMs: number;
 	cx: number;
 	cy: number;
 	interactionType?: CursorInteractionType;
+	scrollAmount?: number;
 	cursorType?: CursorVisualType;
 }
 

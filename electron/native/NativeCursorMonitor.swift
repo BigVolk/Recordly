@@ -415,6 +415,14 @@ func mouseInteractionCallback(
 	let action: String
 	let button: Int
 	switch type {
+	case .scrollWheel:
+		let wheelDelta = event.getIntegerValueField(.scrollWheelEventDeltaAxis1)
+		let delta = wheelDelta == 0 ? event.getIntegerValueField(.scrollWheelEventPointDeltaAxis1) : wheelDelta
+		if delta != 0 {
+			print("SCROLL:\(delta):\(Int(Date().timeIntervalSince1970 * 1000))")
+			fflush(stdout)
+		}
+		return Unmanaged.passUnretained(event)
 	case .leftMouseDown:
 		action = "mousedown"
 		button = 1
@@ -449,6 +457,7 @@ func mouseInteractionCallback(
 }
 
 let mouseEventTypes: [CGEventType] = [
+	.scrollWheel,
 	.leftMouseDown,
 	.leftMouseUp,
 	.rightMouseDown,

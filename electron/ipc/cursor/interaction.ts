@@ -233,6 +233,21 @@ export function recordCursorMouseUp() {
 	pushCursorSample(point.cx, point.cy, getCursorCaptureElapsedMs(), "mouseup");
 }
 
+export function recordCursorScroll(delta: number, eventTimeMs = Date.now()) {
+	if (!isCursorCaptureActive || isCursorCapturePaused() || !Number.isFinite(delta) || delta === 0)
+		return;
+	const point = getNormalizedCursorPoint();
+	if (!point) return;
+	pushCursorSample(
+		point.cx,
+		point.cy,
+		getCursorCaptureElapsedMs(eventTimeMs),
+		delta > 0 ? "scroll-up" : "scroll-down",
+		undefined,
+		Math.abs(delta),
+	);
+}
+
 export async function startInteractionCapture() {
 	if (!isCursorCaptureActive) {
 		return;

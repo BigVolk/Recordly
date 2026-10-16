@@ -20,6 +20,7 @@ import {
 	mergeCustomSoundEffects,
 } from "./customSoundEffects";
 import { getMouseClickSoundAsset } from "./mouseClickSound";
+import { getScrollSoundAsset } from "./scrollSounds";
 import {
 	DEFAULT_ZOOM_SOUND_EFFECTS,
 	MAX_ZOOM_SOUND_DELAY_MS,
@@ -28,7 +29,16 @@ import {
 	type ZoomSoundEffects,
 	type ZoomSoundSlot,
 	type MouseClickSoundChoice,
+	type ScrollSoundChoice,
+	type ScrollSoundSlot,
 } from "./zoomSoundSettings";
+
+const scrollSlots: { slot: ScrollSoundSlot; label: string }[] = [
+	{ slot: "smallScrollUp", label: "Small scroll up" },
+	{ slot: "smallScrollDown", label: "Small scroll down" },
+	{ slot: "largeScrollUp", label: "Large scroll up" },
+	{ slot: "largeScrollDown", label: "Large scroll down" },
+];
 
 type SoundSlot = ZoomSoundSlot;
 const groups = [
@@ -349,6 +359,9 @@ export function ZoomSoundEffectsPanel({
 	const clickPreviewRequestRef = useRef(0);
 	const [library, setLibrary] = useState<CustomSoundEffect[]>([]);
 	const [importing, setImporting] = useState<SoundEffectKind | null>(null);
+	const [scrollDelayInputs, setScrollDelayInputs] = useState<
+		Partial<Record<ScrollSoundSlot, string>>
+	>({});
 	const catalog = mergeCustomSoundEffects(settings.customSounds, library);
 	function changeSettings(next: ZoomSoundEffects) {
 		saveEditorPreferences({ zoomSoundEffects: next });
@@ -386,6 +399,13 @@ export function ZoomSoundEffectsPanel({
 					...settings,
 					customSounds: mergeCustomSoundEffects(settings.customSounds, library, sounds),
 					...(kind === "click" ? { mouseClickSound: sounds[0].id } : {}),
+					...(kind === "scroll"
+						? {
+								scrollSounds: Object.fromEntries(
+									scrollSlots.map(({ slot }) => [slot, sounds[0].id]),
+								) as ZoomSoundEffects["scrollSounds"],
+							}
+						: {}),
 				});
 			}
 			if (result.errors?.length) toast.warning(result.errors.join("\n"));
@@ -434,22 +454,40 @@ export function ZoomSoundEffectsPanel({
 
 	return (
 		<div className="flex flex-col gap-5">
-			<SliderControl
-				label={t("audio.whooshVolume", "Whoosh volume")}
-				value={volume}
-				min={0}
-				max={1}
-				step={0.01}
-				onChange={changeWhooshVolume}
-				formatValue={(value) => `${Math.round(value * 100)}%`}
-			/>
+			<h2 className="text-base font-semibold">Sound Effects</h2>
+			<section
+				aria-label="Zoom whoosh sounds"
+				className="flex flex-col gap-3 rounded-xl border border-separator p-3"
+			>
+				<SliderControl
+					label={t("audio.whooshVolume", "Whoosh volume")}
+					value={volume}
+					min={0}
+					max={1}
+					step={0.01}
+					onChange={changeWhooshVolume}
+					formatValue={(value) => `${Math.round(value * 100)}%`}
+				/>
+				<ZoomSoundEffectsEditor
+					settings={settings}
+					onChange={changeSettings}
+					volume={volume}
+					catalog={catalog}
+					importing={importing !== null}
+					onImport={() => void importSounds("whoosh")}
+				/>
+			</section>
 			<p className="text-xs text-muted-foreground">
 				{t(
 					"audio.importDescription",
 					"Add local audio files up to 60 seconds long. Files are copied into your sound library. Changes take effect immediately.",
 				)}
 			</p>
-			<section className="flex flex-col gap-2" aria-label="Mouse click sounds">
+			<section
+				className="flex flex-col gap-2 rounded-xl border border-separator p-3"
+				aria-label="Mouse click sounds"
+			>
+				<h3 className="text-sm font-semibold">Mouse clicks</h3>
 				<Select
 					aria-label="Mouse click sound"
 					value={settings.mouseClickSound}
@@ -511,14 +549,157 @@ export function ZoomSoundEffectsPanel({
 					{t("audio.previewSound", "Preview")}
 				</Button>
 			</section>
-			<ZoomSoundEffectsEditor
-				settings={settings}
-				onChange={changeSettings}
-				volume={volume}
-				catalog={catalog}
-				importing={importing !== null}
-				onImport={() => void importSounds("whoosh")}
-			/>
+			<section
+				aria-label="Scroll sounds"
+				className="flex flex-col gap-3 rounded-xl border border-separator p-3"
+			>
+				<h3 className="text-sm font-semibold">Scrolling</h3>
+				<p className="text-xs text-muted-foreground">
+					Sounds start with each recorded scroll gesture. A negative delay moves the sound
+					earlier; 0 ms follows the scroll event.
+				</p>
+				<Button
+					variant="secondary"
+					size="sm"
+					disabled={importing !== null}
+					onClick={() => void importSounds("scroll")}
+				>
+					Add scroll sound files…
+				</Button>
+				<SliderControl
+					label="Scroll volume"
+					value={settings.scrollVolume}
+					min={0}
+					max={1}
+					step={0.01}
+					onChange={(value) => changeSettings({ ...settings, scrollVolume: value })}
+					formatValue={(value) => `${Math.round(value * 100)}%`}
+				/>
+				<SliderControl
+					label="Large scroll starts at"
+					value={settings.scrollLargeThreshold}
+					min={1}
+					max={20}
+					step={1}
+					onChange={(value) =>
+						changeSettings({ ...settings, scrollLargeThreshold: value })
+					}
+					formatValue={(value) => `${value} ticks`}
+				/>
+				{scrollSlots.map(({ slot, label }) => (
+					<div
+						key={slot}
+						className="flex flex-col gap-2 rounded-lg border border-separator p-2"
+					>
+						<span className="text-sm font-medium">{label}</span>
+						<Select
+							aria-label={`${label} sound`}
+							value={settings.scrollSounds[slot]}
+							onValueChange={(value) =>
+								changeSettings({
+									...settings,
+									customSounds: catalog,
+									scrollSounds: {
+										...settings.scrollSounds,
+										[slot]: value as ScrollSoundChoice,
+									},
+								})
+							}
+						>
+							<SelectTrigger aria-label={`${label} sound`}>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="default-scroll">Default scroll</SelectItem>
+								<SelectItem value="none">No sound</SelectItem>
+								{catalog
+									.filter((sound) => sound.kind === "scroll")
+									.map((sound) => (
+										<SelectItem key={sound.id} value={sound.id}>
+											{sound.name}
+										</SelectItem>
+									))}
+							</SelectContent>
+						</Select>
+						<Button
+							variant="secondary"
+							size="sm"
+							disabled={
+								settings.scrollSounds[slot] === "none" ||
+								settings.scrollVolume === 0
+							}
+							onClick={() => {
+								const sound = getScrollSoundAsset(
+									{ ...settings, customSounds: catalog },
+									slot,
+								);
+								if (sound)
+									void resolveMediaElementSource(sound.path).then((source) => {
+										const audio = new Audio(source.src);
+										audio.volume = settings.scrollVolume;
+										audio.onended = source.revoke;
+										void audio
+											.play()
+											.catch(() =>
+												toast.warning("Could not preview this sound."),
+											);
+									});
+							}}
+						>
+							Preview
+						</Button>
+						<SliderControl
+							label={`${label} delay`}
+							value={settings.scrollDelaysMs[slot]}
+							min={-MAX_ZOOM_SOUND_DELAY_MS}
+							max={MAX_ZOOM_SOUND_DELAY_MS}
+							step={10}
+							onChange={(value) =>
+								changeSettings({
+									...settings,
+									scrollDelaysMs: { ...settings.scrollDelaysMs, [slot]: value },
+								})
+							}
+							formatValue={(value) => `${value} ms`}
+						/>
+						<input
+							type="number"
+							aria-label={`${label} delay value`}
+							className="w-28 rounded border border-separator bg-transparent px-2 py-1 text-sm"
+							min={-MAX_ZOOM_SOUND_DELAY_MS}
+							max={MAX_ZOOM_SOUND_DELAY_MS}
+							step={1}
+							value={scrollDelayInputs[slot] ?? settings.scrollDelaysMs[slot]}
+							onChange={(event) => {
+								setScrollDelayInputs((current) => ({
+									...current,
+									[slot]: event.target.value,
+								}));
+								const value = Number(event.target.value);
+								if (event.target.value !== "" && Number.isFinite(value))
+									changeSettings({
+										...settings,
+										scrollDelaysMs: {
+											...settings.scrollDelaysMs,
+											[slot]: Math.round(
+												Math.max(
+													-MAX_ZOOM_SOUND_DELAY_MS,
+													Math.min(MAX_ZOOM_SOUND_DELAY_MS, value),
+												),
+											),
+										},
+									});
+							}}
+							onBlur={() =>
+								setScrollDelayInputs((current) => ({
+									...current,
+									[slot]: undefined,
+								}))
+							}
+						/>
+					</div>
+				))}
+			</section>
 		</div>
 	);
 }

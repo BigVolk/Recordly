@@ -60,8 +60,14 @@ export function normalizeCursorTelemetrySamples(rawSamples: unknown): CursorTele
 					point.interactionType === "right-click" ||
 					point.interactionType === "middle-click" ||
 					point.interactionType === "move" ||
-					point.interactionType === "mouseup"
+					point.interactionType === "mouseup" ||
+					point.interactionType === "scroll-up" ||
+					point.interactionType === "scroll-down"
 						? point.interactionType
+						: undefined,
+				scrollAmount:
+					typeof point.scrollAmount === "number" && Number.isFinite(point.scrollAmount)
+						? Math.max(0, Math.min(1000, point.scrollAmount))
 						: undefined,
 				cursorType:
 					point.cursorType === "arrow" ||
@@ -243,12 +249,14 @@ export function pushCursorSample(
 	timeMs: number,
 	interactionType: CursorInteractionType = "move",
 	cursorType?: CursorVisualType,
+	scrollAmount?: number,
 ) {
 	activeCursorSamples.push({
 		timeMs: Math.max(0, timeMs),
 		cx,
 		cy,
 		interactionType,
+		scrollAmount,
 		cursorType: cursorType ?? currentCursorVisualType,
 	} as CursorTelemetryPoint);
 

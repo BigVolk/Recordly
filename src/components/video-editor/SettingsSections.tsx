@@ -5,7 +5,7 @@ type Category = "general" | "motion" | "sounds" | "recording" | "files" | "advan
 const labels: Record<Category, string> = {
 	general: "General",
 	motion: "Motion",
-	sounds: "Sounds",
+	sounds: "Sound Effects",
 	recording: "Recording",
 	files: "Files",
 	advanced: "Advanced",

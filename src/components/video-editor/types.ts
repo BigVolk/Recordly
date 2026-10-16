@@ -17,6 +17,7 @@ export interface ZoomRegion {
 }
 
 export interface CursorTelemetryPoint {
+	scrollAmount?: number;
 	timeMs: number;
 	cx: number;
 	cy: number;
@@ -27,7 +28,9 @@ export interface CursorTelemetryPoint {
 		| "double-click"
 		| "right-click"
 		| "middle-click"
-		| "mouseup";
+		| "mouseup"
+		| "scroll-up"
+		| "scroll-down";
 	cursorType?:
 		| "arrow"
 		| "text"
