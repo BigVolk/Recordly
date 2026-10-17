@@ -160,10 +160,12 @@ done.wait()
 	])("keeps %s audio one second long and its later tone aligned", (name) => {
 		expect(results[name].frames / 48_000).toBeCloseTo(1, 1);
 		expect(results[name].marker).toBeCloseTo(0.7, 1);
+		expect(results[name].marker - results.contiguous.marker).toBeCloseTo(0, 2);
 	});
 	it("keeps later speech aligned after sustained overload exceeds the queue limit", () => {
 		expect(results.overflow.frames / 48_000).toBeCloseTo(4, 1);
 		expect(results.overflow.marker).toBeCloseTo(3.7, 1);
+		expect(results.overflow.marker - results.contiguous.marker).toBeCloseTo(3, 2);
 	});
 	it("preserves an actual missing interval as silence", () => {
 		expect(results.gap.silentGap).toBe(true);

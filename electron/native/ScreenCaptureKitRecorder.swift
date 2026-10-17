@@ -66,7 +66,7 @@ final class AudioSampleQueue {
 			let format = buffer.formatDescription,
 			let asbd = format.audioStreamBasicDescription,
 			asbd.mFormatID == kAudioFormatLinearPCM,
-			asbd.mSampleRate.isFinite, asbd.mSampleRate > 0,
+			asbd.mSampleRate.isFinite, asbd.mSampleRate > 0, asbd.mSampleRate <= Double(Int32.max),
 			time.isValid, time.seconds.isFinite else {
 			failure = failure ?? audioError("Invalid PCM audio buffer")
 			return
@@ -133,7 +133,7 @@ final class AudioSampleQueue {
 			guard fillSilence(to: next.time, format: format) else { return }
 			guard failure == nil, isReady() else { return }
 			// Trim overlapping or repeated samples instead of writing time twice.
-			let overlap = max(0, Int(((endTime - next.time).seconds * asbd.mSampleRate).rounded()))
+			let overlap = Int(min(Double(next.buffer.numSamples), max(0, ((endTime - next.time).seconds * asbd.mSampleRate).rounded())))
 			let skip = overlap <= 1 ? 0 : overlap // CMTime(seconds:) can round adjacent timestamps by one frame.
 			if skip < next.buffer.numSamples {
 				do {
@@ -169,7 +169,7 @@ final class AudioSampleQueue {
 		var chunksRemaining = 16
 		while isReady(), failure == nil, chunksRemaining > 0 {
 			chunksRemaining -= 1
-			let frames = min(4096, Int64(((target - endTime).seconds * asbd.mSampleRate).rounded()))
+			let frames = Int64(min(4096, max(0, ((target - endTime).seconds * asbd.mSampleRate).rounded())))
 			guard frames > 0 else {
 				// Avoid sub-sample rounding leaving finish in a retry loop.
 				if target > endTime { endTime = target }
