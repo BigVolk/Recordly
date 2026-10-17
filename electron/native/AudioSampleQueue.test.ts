@@ -115,11 +115,18 @@ Task {
  let terminalFailure = await terminal.finish(at: at(0.01), timeout: 0) != nil
  var writes = 0
  let longGap = AudioSampleQueue(isReady: { true }, canWrite: { true }, append: { _ in writes += 1; return true })
- longGap.enqueue(tone(index: 0), at: at(1800))
+ longGap.enqueue(tone(index: 0), at: at(10))
  precondition(writes <= 16)
- let longGapError = await longGap.finish(at: at(1800), timeout: 0)
- precondition(longGapError != nil)
- precondition(writes <= 32)
+ let longGapError = await longGap.finish(at: at(10), timeout: 0)
+ precondition(longGapError == nil, "Progressing gap restoration must not time out")
+ precondition(longGap.endTime == at(10))
+ var clipReady = false
+ var clippedFrames = 0
+ let clipped = AudioSampleQueue(isReady: { clipReady }, canWrite: { true }, append: { clippedFrames += $0.numSamples; return true })
+ for index in 0..<10 { clipped.enqueue(tone(index: index), at: at(Double(index) / 100)) }
+ clipReady = true
+ let clipError = await clipped.finish(at: at(0.055), timeout: 0)
+ precondition(clipError == nil && clippedFrames == 2640, "Queued audio must stop at the final media time")
  print("{\"tracks\":{" + entries.joined(separator: ",") + "},\"pressure\":{\"dropped\":\(pressure.droppedBuffers),\"peakBytes\":\(pressure.peakQueuedBytes),\"peakSeconds\":\(pressure.peakQueuedDuration),\"failedFinish\":\(failedFinish),\"terminalFailure\":\(terminalFailure)}}")
  done.signal()
 }

@@ -90,9 +90,11 @@ final class AudioSampleQueue {
 
 	/// Pads the end too: a final dropped buffer has no later timestamp to reveal its gap.
 	func finish(at targetTime: CMTime, timeout: TimeInterval = 5.0) async -> Error? {
-		let deadline = ProcessInfo.processInfo.systemUptime + timeout
+		var deadline = ProcessInfo.processInfo.systemUptime + timeout
 		while failure == nil {
-			drain()
+			if Task.isCancelled { failure = CancellationError(); break }
+			let previousEnd = endTime
+			drain(until: targetTime)
 			if pending.isEmpty {
 				if let format = lastFormat {
 					fillSilence(to: targetTime, format: format)
@@ -100,6 +102,12 @@ final class AudioSampleQueue {
 				if failure != nil || lastFormat == nil || endTime >= targetTime {
 					break
 				}
+			}
+			if endTime > previousEnd {
+				// Timeout means stalled, not successfully restoring a long quiet interval.
+				deadline = ProcessInfo.processInfo.systemUptime + timeout
+				await Task.yield()
+				continue
 			}
 			if ProcessInfo.processInfo.systemUptime >= deadline {
 				failure = audioError("Audio encoder did not drain before finalization")
@@ -114,7 +122,7 @@ final class AudioSampleQueue {
 		return failure
 	}
 
-	private func drain() {
+	private func drain(until limit: CMTime? = nil) {
 		guard failure == nil else { return }
 		guard canWrite() else {
 			failure = audioError("Audio writer stopped accepting data")
@@ -123,7 +131,12 @@ final class AudioSampleQueue {
 			queuedBytes = 0
 			return
 		}
-		while let next = pending.first, isReady(), failure == nil {
+		while let next = pending.first, failure == nil {
+			if let limit, next.time >= limit || endTime >= limit {
+				removeFirst()
+				continue
+			}
+			guard isReady() else { return }
 			guard let format = next.buffer.formatDescription,
 				let asbd = format.audioStreamBasicDescription else {
 				failure = audioError("Missing audio format")
@@ -135,12 +148,13 @@ final class AudioSampleQueue {
 			// Trim overlapping or repeated samples instead of writing time twice.
 			let overlap = Int(min(Double(next.buffer.numSamples), max(0, ((endTime - next.time).seconds * asbd.mSampleRate).rounded())))
 			let skip = overlap <= 1 ? 0 : overlap // CMTime(seconds:) can round adjacent timestamps by one frame.
-			if skip < next.buffer.numSamples {
+			let remainingFrames = next.buffer.numSamples - skip
+			let count = limit.map { Int(min(Double(remainingFrames), max(0, (($0 - endTime).seconds * asbd.mSampleRate).rounded()))) } ?? remainingFrames
+			if count > 0 {
 				do {
 					let buffer: CMSampleBuffer
-					if skip > 0 {
+					if skip > 0 || count < next.buffer.numSamples {
 						let pcmFormat = AVAudioFormat(cmAudioFormatDescription: format)
-						let count = next.buffer.numSamples - skip
 						guard let pcm = AVAudioPCMBuffer(pcmFormat: pcmFormat, frameCapacity: AVAudioFrameCount(count)) else {
 							throw audioError("Cannot allocate trimmed audio")
 						}
@@ -155,10 +169,14 @@ final class AudioSampleQueue {
 					endTime = endTime + CMTime(value: Int64(buffer.numSamples), timescale: rate)
 				} catch { failure = error; return }
 			}
-			pending.removeFirst()
-			queuedDuration = max(0, queuedDuration - next.duration)
-			queuedBytes -= next.bytes
+			removeFirst()
 		}
+	}
+
+	private func removeFirst() {
+		let next = pending.removeFirst()
+		queuedDuration = max(0, queuedDuration - next.duration)
+		queuedBytes -= next.bytes
 	}
 
 	@discardableResult
