@@ -36,6 +36,7 @@ await fs.writeFile(
 );
 let application;
 let browser;
+const errors = [];
 async function launchApp() {
 	const endpoint = new Promise((resolve, reject) => {
 		application = spawn(
@@ -45,10 +46,9 @@ async function launchApp() {
 				cwd: root,
 				env: {
 					...process.env,
-					RECORDLY_DEV_OPEN_RECORDING_INPUT: path.join(
-						root,
-						"tests/ui/fixtures/preview.mp4",
-					),
+					RECORDLY_DEV_OPEN_RECORDING_INPUT:
+						process.env.RECORDLY_SMOKE_RECORDING_INPUT ||
+						path.join(root, "tests/ui/fixtures/preview.mp4"),
 				},
 				stdio: ["ignore", "ignore", "pipe"],
 			},
@@ -97,9 +97,30 @@ async function launchApp() {
 	const context = browser.contexts()[0];
 	await expect.poll(() => context.pages().length, { timeout: 20000 }).toBeGreaterThan(0);
 	const page = context.pages()[0];
+	page.on("pageerror", (error) => {
+		errors.push(error.message);
+		console.error("Packaged page error:", error.message);
+	});
 	await page
 		.getByRole("radio", { name: "Sound Effects", exact: true })
 		.waitFor({ timeout: 20000 });
+	await expect
+		.poll(
+			() =>
+				page.evaluate(() => {
+					const video = document.querySelector(
+						'video[preload="auto"][aria-hidden="true"]',
+					);
+					return (
+						video instanceof HTMLVideoElement &&
+						video.readyState >= 2 &&
+						video.videoWidth > 0 &&
+						!video.error
+					);
+				}),
+			{ timeout: 20000 },
+		)
+		.toBe(true);
 	return page;
 }
 
@@ -118,11 +139,6 @@ async function stopApp() {
 
 try {
 	let page = await launchApp();
-	const errors = [];
-	page.on("pageerror", (error) => {
-		errors.push(error.message);
-		console.error("Packaged page error:", error.message);
-	});
 	await expect
 		.poll(() => page.evaluate(() => typeof window.electronAPI?.getAppSetting), {
 			timeout: 15000,
@@ -279,6 +295,7 @@ try {
 			page.getByRole("spinbutton", { name: `${label} value`, exact: true }),
 		).toHaveValue(String(value));
 	}
+	assert.deepEqual(errors, []);
 	console.log(
 		"Packaged UI smoke passed: desktop bridge, styled text, click/whoosh/scroll sounds, independent volumes and delays restored after app relaunch.",
 	);

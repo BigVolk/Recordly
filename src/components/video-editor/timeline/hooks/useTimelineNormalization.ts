@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { normalizeRegionSpan } from "../core/spans";
 import type { AudioRegion, SpeedRegion, TrimRegion, ZoomRegion } from "../../types";
+import { soundEventCategory } from "../../audio/soundEvents";
 
 interface UseTimelineNormalizationParams {
 	totalMs: number;
@@ -72,6 +73,10 @@ export function useTimelineNormalization({
 		});
 
 		audioRegions.forEach((region) => {
+			// Recorded clicks and scrolls can be much shorter than the minimum
+			// draggable clip. Their builders already clamp them to the timeline.
+			// Writing normalization back as an event edit creates a feedback loop.
+			if (soundEventCategory(region.id)) return;
 			const normalized = normalizeRegionSpan({
 				startMs: region.startMs,
 				endMs: region.endMs,
