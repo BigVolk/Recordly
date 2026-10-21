@@ -150,6 +150,8 @@ try {
 		(await page.evaluate(() => window.electronAPI.getSoundEffectLibrary())).sounds[0].name,
 		"Smoke custom click",
 	);
+	await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await page.locator('button[aria-label="Mouse click sound"]').click();
 	await page
 		.getByRole("listbox", { name: "Mouse click sound" })
@@ -164,6 +166,7 @@ try {
 			),
 		)
 		.toBe(`local:${customClickId}`);
+	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
 	await page.getByRole("button", { name: /Small zoom in sound$/ }).click();
 	await page
 		.getByRole("listbox", { name: "Small zoom in sound", exact: true })
@@ -173,9 +176,11 @@ try {
 	await volume.focus();
 	await page.keyboard.press("End");
 	const clickVolume = page.getByRole("slider", { name: "Mouse click volume", exact: true });
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await clickVolume.focus();
 	await page.keyboard.press("Home");
 	for (let i = 0; i < 60; i++) await page.keyboard.press("ArrowRight");
+	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
 	await expect(volume).toHaveValue("1");
 	const delayValues = {
 		smallZoomIn: -150,
@@ -193,6 +198,7 @@ try {
 		for (let i = 0; i < Math.abs(value / 10); i++)
 			await page.keyboard.press(value < 0 ? "ArrowLeft" : "ArrowRight");
 	}
+	await page.getByRole("tab", { name: "Scrolling", exact: true }).click();
 	await page.getByRole("button", { name: /Scroll sound$/ }).click();
 	await page
 		.getByRole("listbox", { name: "Scroll sound" })
@@ -231,6 +237,7 @@ try {
 		),
 		delayValues,
 	);
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await page.evaluate(() => {
 		const play = HTMLMediaElement.prototype.play;
 		HTMLMediaElement.prototype.play = function () {
@@ -272,19 +279,25 @@ try {
 	await stopApp();
 	page = await launchApp();
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await expect(page.locator('button[aria-label="Mouse click sound"]')).toContainText(
 		"Smoke custom click",
 	);
+	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(
 		"Better whoosh",
 	);
 	await expect(page.getByRole("slider", { name: "Whoosh volume", exact: true })).toHaveValue("1");
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await expect(page.getByRole("slider", { name: "Mouse click volume", exact: true })).toHaveValue(
 		"0.6",
 	);
+	await page.getByRole("tab", { name: "Scrolling", exact: true }).click();
 	await expect(page.getByRole("slider", { name: "Scroll volume" })).toHaveValue("0.45");
 	await expect(page.getByRole("button", { name: /Scroll sound$/ })).toContainText("No sound");
 	await expect(page.getByRole("spinbutton", { name: "Scroll delay value" })).toHaveValue("-175");
+	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
 	for (const [label, value] of [
 		["Small zoom in delay", -150],
 		["Small zoom out delay", 200],

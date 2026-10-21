@@ -64,7 +64,7 @@ export function applySoundEventOverrides(
 			durationMs,
 			requestedStart +
 				(edit.durationMs ??
-					sound?.durationMs ??
+					(category === "scroll" ? undefined : sound?.durationMs) ??
 					region.endMs - region.startMs + (region.sourceOffsetMs ?? 0)),
 		);
 		if (endMs <= startMs) return [];

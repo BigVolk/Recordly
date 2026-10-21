@@ -6,6 +6,7 @@ test("applies and reopens independent early and late whoosh delays", async ({ pa
 	await page.goto("/?windowType=editor");
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
 	const assignments = [
 		["Small zoom in delay", "smallZoomIn", -150],
 		["Small zoom out delay", "smallZoomOut", 200],
@@ -33,6 +34,7 @@ test("applies and reopens independent early and late whoosh delays", async ({ pa
 	await page.reload();
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
 	await expect(typedDelay).toHaveValue("-275");
 	for (const [label, , value] of assignments)
 		if (label !== "Small zoom in delay")

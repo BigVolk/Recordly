@@ -82,6 +82,14 @@ export function useAudioPreviewSync({
 	const lastSourceAudioSyncTimeRef = useRef<number | null>(null);
 	const [sourceLoadVersion, setSourceLoadVersion] = useState(0);
 	const [userLoadVersion, setUserLoadVersion] = useState(0);
+	const lastOverlayTimeRef = useRef(timelineTime);
+	const scrubTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+	useEffect(
+		() => () => {
+			for (const timer of scrubTimersRef.current.values()) clearTimeout(timer);
+		},
+		[],
+	);
 
 	const ensureSourceAudioContext = useCallback(() => {
 		if (!sourceAudioContextRef.current) {
@@ -337,6 +345,8 @@ export function useAudioPreviewSync({
 		// Resynchronize immediately when an overlay finishes loading.
 		void userLoadVersion;
 		const currentTimeMs = timelineTime * 1000;
+		const scrubbing = !isPlaying && timelineTime !== lastOverlayTimeRef.current;
+		lastOverlayTimeRef.current = timelineTime;
 
 		for (const track of resolvedUserTracks) {
 			const audio = audioElementsRef.current.get(track.id);
@@ -346,10 +356,16 @@ export function useAudioPreviewSync({
 			const endMs = track.timelineBinding.endMs;
 			const isInRegion = currentTimeMs >= startMs && currentTimeMs < endMs;
 
-			if (isPlaying && isInRegion) {
+			const loop = track.sourceRef.loop === true;
+			audio.loop = loop;
+			const existingTimer = scrubTimersRef.current.get(track.id);
+			if (existingTimer) clearTimeout(existingTimer);
+			if ((isPlaying || (scrubbing && loop)) && isInRegion) {
 				enablePitchPreservingPlayback(audio);
-				const audioOffset =
+				let audioOffset =
 					(currentTimeMs - startMs + (track.sourceRef.sourceOffsetMs ?? 0)) / 1000;
+				if (loop && Number.isFinite(audio.duration) && audio.duration > 0)
+					audioOffset %= audio.duration;
 				if (audio.paused || Math.abs(audio.currentTime - audioOffset) > 0.2) {
 					audio.currentTime = audioOffset;
 				}
@@ -364,6 +380,11 @@ export function useAudioPreviewSync({
 				if (audio.paused) {
 					audio.play().catch(() => undefined);
 				}
+				if (!isPlaying)
+					scrubTimersRef.current.set(
+						track.id,
+						setTimeout(() => audio.pause(), 100),
+					);
 			} else if (!audio.paused) {
 				audio.pause();
 			}

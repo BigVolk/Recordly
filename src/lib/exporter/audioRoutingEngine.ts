@@ -12,6 +12,7 @@ export interface ResolvedAudioTrack {
 		path: string;
 		startDelayMs: number;
 		sourceOffsetMs?: number;
+		loop?: boolean;
 	};
 	gain: number;
 	timelineBinding: {
@@ -78,6 +79,7 @@ export function buildResolvedAudioPlan(input: {
 		kind: "user",
 		sourceRef: {
 			path: region.audioPath,
+			...(region.id.startsWith("scroll:") ? { loop: true } : {}),
 			startDelayMs: 0,
 			...(region.sourceOffsetMs
 				? { sourceOffsetMs: Math.max(0, region.sourceOffsetMs) }

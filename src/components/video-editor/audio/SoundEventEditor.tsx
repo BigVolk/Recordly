@@ -11,10 +11,12 @@ import { ZOOM_SOUND_LIBRARY, type ZoomSoundEffects } from "./zoomSoundSettings";
 import { useState } from "react";
 
 export function SoundEventEditor({
+	advanced = false,
 	id,
 	settings,
 	onChange,
 }: {
+	advanced?: boolean;
 	id: string;
 	settings: ZoomSoundEffects;
 	onChange: (settings: ZoomSoundEffects) => void;
@@ -42,7 +44,7 @@ export function SoundEventEditor({
 					<SelectValue />
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="inherit">Use category sound</SelectItem>
+					<SelectItem value="inherit">Choose sound</SelectItem>
 					{category === "whoosh" ? (
 						ZOOM_SOUND_LIBRARY.map((sound) => (
 							<SelectItem key={sound.id} value={sound.id}>
@@ -65,38 +67,42 @@ export function SoundEventEditor({
 						))}
 				</SelectContent>
 			</Select>
-			<SliderControl
-				label="Event delay"
-				value={edit.delayMs ?? 0}
-				min={-2000}
-				max={2000}
-				step={10}
-				onChange={(delayMs) => change({ delayMs })}
-				formatValue={(value) => `${value} ms`}
-			/>
-			<label className="text-xs">
-				Delay from category timing (ms)
-				<input
-					className="mt-1 w-full rounded border border-separator bg-transparent p-2"
-					aria-label="Event delay value"
-					type="number"
-					min={-60000}
-					max={60000}
-					value={draft ?? edit.delayMs ?? 0}
-					onBlur={() => setDraft(null)}
-					onChange={(event) => {
-						const text = event.target.value;
-						setDraft(text);
-						if (text && Number.isFinite(Number(text)))
-							change({
-								delayMs: Math.max(
-									-60000,
-									Math.min(60000, Math.round(Number(text))),
-								),
-							});
-					}}
-				/>
-			</label>
+			{advanced && (
+				<>
+					<SliderControl
+						label="Event delay"
+						value={edit.delayMs ?? 0}
+						min={-2000}
+						max={2000}
+						step={10}
+						onChange={(delayMs) => change({ delayMs })}
+						formatValue={(value) => `${value} ms`}
+					/>
+					<label className="text-xs">
+						Delay from category timing (ms)
+						<input
+							className="mt-1 w-full rounded border border-separator bg-transparent p-2"
+							aria-label="Event delay value"
+							type="number"
+							min={-60000}
+							max={60000}
+							value={draft ?? edit.delayMs ?? 0}
+							onBlur={() => setDraft(null)}
+							onChange={(event) => {
+								const text = event.target.value;
+								setDraft(text);
+								if (text && Number.isFinite(Number(text)))
+									change({
+										delayMs: Math.max(
+											-60000,
+											Math.min(60000, Math.round(Number(text))),
+										),
+									});
+							}}
+						/>
+					</label>
+				</>
+			)}
 		</section>
 	);
 }

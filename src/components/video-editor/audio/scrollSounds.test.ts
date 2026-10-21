@@ -29,11 +29,9 @@ describe("recorded scroll sounds", () => {
 				},
 			},
 		);
-		expect(regions.map(({ startMs, volume }) => [startMs, volume])).toEqual([
-			[1175, 0.3],
-			[1375, 0.3],
-		]);
-		expect(regions).toHaveLength(2);
+		expect(regions.map(({ startMs, volume }) => [startMs, volume])).toEqual([[1175, 0.3]]);
+		expect(regions).toHaveLength(1);
+		expect(regions[0].endMs).toBe(1545);
 	});
 
 	it("respects the shared scroll sound choice and mute", () => {

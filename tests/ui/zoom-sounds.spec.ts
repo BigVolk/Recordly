@@ -18,6 +18,8 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 	await page.goto("/?windowType=editor");
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
+	if (!(await page.getByRole("switch", { name: "Advanced settings", exact: true }).isChecked()))
+		await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
 
 	async function choose(label: string, sound: string) {
 		await page.getByRole("button", { name: new RegExp(`${label}$`) }).click();
@@ -93,6 +95,8 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 	await page.reload();
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
+	if (!(await page.getByRole("switch", { name: "Advanced settings", exact: true }).isChecked()))
+		await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(
 		"Better whoosh",
 	);
@@ -121,6 +125,8 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 		)
 		.toBe(true);
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
+	if (!(await page.getByRole("switch", { name: "Advanced settings", exact: true }).isChecked()))
+		await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
 	await page.getByRole("button", { name: "Reset sounds", exact: true }).click();
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(
 		"Short & dry 1",

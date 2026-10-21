@@ -25,6 +25,7 @@ test("opens recorded clicks and scrolls at the end of a recording without a rend
 	await scroll.click();
 	await expect(page.getByRole("region", { name: "Selected sound effect" })).toBeVisible();
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("tab", { name: "Scrolling", exact: true }).click();
 	await expect(page.getByRole("slider", { name: "Scroll volume", exact: true })).toBeVisible();
 	await expect(scroll).toHaveAttribute("data-start-ms", "5960");
 	expect(errors).toEqual([]);

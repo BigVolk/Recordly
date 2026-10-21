@@ -38,14 +38,17 @@ test("imports custom whoosh and click choices and saves them without Apply", asy
 		.getByRole("listbox", { name: "Small zoom in sound" })
 		.getByRole("option", { name: "Imported air" })
 		.click();
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await page.getByRole("button", { name: "Add mouse click files…" }).click();
 	await expect(page.locator('button[aria-label="Mouse click sound"]')).toContainText(
 		"Imported tap",
 	);
 	const whooshVolume = page.getByRole("slider", { name: "Whoosh volume", exact: true });
 	const clickVolume = page.getByRole("slider", { name: "Mouse click volume", exact: true });
+	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
 	await whooshVolume.focus();
 	await page.keyboard.press("End");
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await clickVolume.focus();
 	await page.keyboard.press("Home");
 	for (let i = 0; i < 47; i++) await page.keyboard.press("ArrowRight");
@@ -72,9 +75,12 @@ test("imports custom whoosh and click choices and saves them without Apply", asy
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(
 		"Imported air",
 	);
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await expect(page.locator('button[aria-label="Mouse click sound"]')).toContainText(
 		"Imported tap",
 	);
+	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
 	await expect(whooshVolume).toHaveValue("1");
+	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await expect(clickVolume).toHaveValue("0.47");
 });

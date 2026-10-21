@@ -42,12 +42,15 @@ export function buildScrollSoundRegions(
 	if (!Number.isFinite(timelineDurationMs) || timelineDurationMs <= 0) return [];
 	const settings = normalizeZoomSoundEffects(rawSettings);
 	if (settings.scrollVolume === 0) return [];
-	const events = telemetry.filter(
-		(point) =>
-			(point.interactionType === "scroll-up" || point.interactionType === "scroll-down") &&
-			Number.isFinite(point.timeMs) &&
-			point.timeMs >= 0,
-	);
+	const events = telemetry
+		.filter(
+			(point) =>
+				(point.interactionType === "scroll-up" ||
+					point.interactionType === "scroll-down") &&
+				Number.isFinite(point.timeMs) &&
+				point.timeMs >= 0,
+		)
+		.sort((a, b) => a.timeMs - b.timeMs);
 	const sequence = clips.length
 		? clips
 		: [{ id: "source", startMs: 0, endMs: timelineDurationMs, speed: 1 }];
@@ -62,27 +65,30 @@ export function buildScrollSoundRegions(
 		const sourceStart = getClipSourceStartMs(clip);
 		const sourceEnd = getClipSourceEndMs(clip);
 		const speed = Number.isFinite(clip.speed) && clip.speed > 0 ? clip.speed : 1;
-		let lastSoundAt = -Infinity;
+		const slot: ScrollSoundSlot = "smallScrollUp";
+		const sound = getScrollSoundAsset(settings, slot);
+		if (!sound) continue;
+		const gestures: { first: number; last: number; index: number }[] = [];
 		for (const [index, event] of events.entries()) {
-			if (event.timeMs < sourceStart || event.timeMs >= sourceEnd) continue;
-			const eventAt = clip.startMs + (event.timeMs - sourceStart) / speed;
-			// A trackpad produces many wheel packets per gesture. Keep the first packet
-			// exactly aligned while avoiding a loud stack of overlapping samples.
-			if (eventAt - lastSoundAt < 45) continue;
-			const slot: ScrollSoundSlot = "smallScrollUp";
-			const sound = getScrollSoundAsset(settings, slot);
-			if (!sound) continue;
-			lastSoundAt = eventAt;
-			const requestedStart = eventAt + settings.scrollDelaysMs[slot];
+			const previous = gestures[gestures.length - 1];
+			if (previous && event.timeMs - previous.last <= 180) previous.last = event.timeMs;
+			else gestures.push({ first: event.timeMs, last: event.timeMs, index });
+		}
+		for (const gesture of gestures) {
+			const from = Math.max(gesture.first, sourceStart);
+			const to = Math.min(gesture.last + sound.durationMs, sourceEnd);
+			if (to <= from) continue;
+			const requestedStart =
+				clip.startMs + (from - sourceStart) / speed + settings.scrollDelaysMs[slot];
 			const startMs = Math.max(0, requestedStart);
 			const endMs = Math.min(
 				clip.endMs,
 				timelineDurationMs,
-				requestedStart + sound.durationMs,
+				requestedStart + (to - from) / speed,
 			);
 			if (startMs >= endMs) continue;
 			regions.push({
-				id: `scroll:${clip.id}:${index}`,
+				id: `scroll:${clip.id}:${gesture.index}`,
 				startMs,
 				endMs,
 				...(requestedStart < 0 ? { sourceOffsetMs: -requestedStart } : {}),

@@ -2681,6 +2681,7 @@ export function SettingsPanel({
 			<section className="flex flex-col gap-3">
 				{selectedAudioId && (
 					<SoundEventEditor
+						advanced={advanced}
 						key={selectedAudioId}
 						id={selectedAudioId}
 						settings={zoomSoundEffects}
@@ -2798,6 +2799,7 @@ export function SettingsPanel({
 			case "sounds":
 				return (
 					<ZoomSoundEffectsPanel
+						advanced={advanced}
 						settings={zoomSoundEffects}
 						onChange={(settings) => onZoomSoundEffectsChange?.(settings)}
 						mouseClickVolume={mouseClickVolume}
