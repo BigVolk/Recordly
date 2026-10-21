@@ -1,22 +1,14 @@
 import type { AudioRegion } from "../types";
 import { getZoomSoundAsset } from "./zoomSoundAssets";
 import { getMouseClickSoundAsset } from "./mouseClickSound";
-import { getScrollSoundAsset } from "./scrollSounds";
-import type {
-	ZoomSoundChoice,
-	ZoomSoundEffects,
-	MouseClickSoundChoice,
-	ScrollSoundChoice,
-} from "./zoomSoundSettings";
+import type { ZoomSoundChoice, ZoomSoundEffects, MouseClickSoundChoice } from "./zoomSoundSettings";
 
 export function soundEventCategory(id: string) {
 	return id.startsWith("zoom-whoosh:")
 		? "whoosh"
 		: id.startsWith("mouse-click:")
 			? "click"
-			: id.startsWith("scroll:")
-				? "scroll"
-				: null;
+			: null;
 }
 
 export function applySoundEventOverrides(
@@ -47,16 +39,7 @@ export function applySoundEventOverrides(
 							...settings,
 							mouseClickSound: edit.soundId as MouseClickSoundChoice,
 						})
-					: getScrollSoundAsset(
-							{
-								...settings,
-								scrollSounds: {
-									...settings.scrollSounds,
-									smallScrollUp: edit.soundId as ScrollSoundChoice,
-								},
-							},
-							"smallScrollUp",
-						)
+					: undefined
 			: undefined;
 		const requestedStart = region.startMs - (region.sourceOffsetMs ?? 0) + (edit.delayMs ?? 0);
 		const startMs = Math.max(0, requestedStart);
@@ -64,7 +47,7 @@ export function applySoundEventOverrides(
 			durationMs,
 			requestedStart +
 				(edit.durationMs ??
-					(category === "scroll" ? undefined : sound?.durationMs) ??
+					sound?.durationMs ??
 					region.endMs - region.startMs + (region.sourceOffsetMs ?? 0)),
 		);
 		if (endMs <= startMs) return [];

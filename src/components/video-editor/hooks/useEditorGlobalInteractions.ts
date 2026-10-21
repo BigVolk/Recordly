@@ -56,11 +56,16 @@ export function useEditorGlobalInteractions({
 				target instanceof HTMLTextAreaElement ||
 				target instanceof HTMLSelectElement ||
 				target?.isContentEditable;
-			const primaryModifier = isMac ? event.metaKey : event.ctrlKey;
+			const primaryModifier = event.metaKey || event.ctrlKey;
 			const key = event.key.toLowerCase();
 
 			if (primaryModifier && !event.altKey && key === "z") {
-				if (!editable) {
+				if (
+					!editable ||
+					(target instanceof HTMLInputElement &&
+						["number", "range"].includes(target.type))
+				) {
+					if (target instanceof HTMLInputElement) target.blur();
 					event.preventDefault();
 					if (event.shiftKey) handleRedo();
 					else handleUndo();

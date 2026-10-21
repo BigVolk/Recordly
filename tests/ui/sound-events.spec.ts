@@ -6,9 +6,7 @@ test("edits and deletes individual whooshes from the timeline", async ({ page })
 	await page.goto("/?windowType=editor");
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
-	await page.getByRole("tab", { name: "Scrolling", exact: true }).click();
-	await expect(page.getByRole("slider", { name: "Scroll volume", exact: true })).toBeVisible();
-	await expect(page.getByRole("button", { name: /Scroll sound$/ })).toHaveCount(1);
+	await expect(page.getByRole("tab", { name: "Scrolling", exact: true })).toHaveCount(0);
 	await page.getByRole("button", { name: "Add Zoom (Z)", exact: true }).click();
 	const events = page.getByRole("button", { name: /^Whoosh ·/ });
 	await expect(events).toHaveCount(2);

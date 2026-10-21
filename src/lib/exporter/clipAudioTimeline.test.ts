@@ -42,20 +42,6 @@ function context() {
 }
 
 describe("clip audio timeline", () => {
-	it("loops a short scroll sample for the complete gesture across export chunks", () => {
-		const processor = new TestAudioProcessor();
-		const { starts, ctx } = context();
-		processor.scheduleOverlay(
-			ctx,
-			{ duration: 0.085 } as AudioBuffer,
-			{ id: "scroll:a:0", startMs: 500, endMs: 3500, volume: 1, audioPath: "scroll.wav" },
-			[],
-			2,
-			2,
-			true,
-		);
-		expect(starts[0]).toHaveBeenCalledWith(0, expect.closeTo(1.5 % 0.085), 1.5);
-	});
 	it("keeps the silent middle interval and schedules retained source at its timeline position", async () => {
 		const processor = new TestAudioProcessor();
 		const prepared = await processor.prepare(

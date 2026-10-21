@@ -13,6 +13,7 @@ import {
 
 function createSnapshot(id: string | null): EditorHistorySnapshot {
 	return {
+		settings: { appearance: { wallpaper: id }, timeline: {}, aspectRatio: "16:9" },
 		zoomRegions: [],
 		clipRegions: [],
 		speedRegions: [],
@@ -27,6 +28,19 @@ function createSnapshot(id: string | null): EditorHistorySnapshot {
 }
 
 describe("editorHistory", () => {
+	it("ignores selection changes and coalesces a pointer edit into one undo step", () => {
+		const stack = createEditorHistoryStack();
+		const first = createSnapshot("first");
+		recordEditorHistorySnapshot(stack, first);
+		recordEditorHistorySnapshot(stack, { ...first, selectedZoomId: "other" });
+		expect(stack.past).toHaveLength(0);
+		recordEditorHistorySnapshot(stack, createSnapshot("drag1"));
+		recordEditorHistorySnapshot(stack, createSnapshot("drag2"), { coalesce: true });
+		expect(stack.past).toHaveLength(1);
+		expect(undoEditorHistoryStack(stack, createSnapshot("drag2"))?.settings).toEqual(
+			first.settings,
+		);
+	});
 	it("initializes without adding undo history", () => {
 		const stack = createEditorHistoryStack();
 		const snapshot = createSnapshot("first");

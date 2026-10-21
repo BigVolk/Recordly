@@ -19,18 +19,13 @@ export function registerSoundEffectHandlers() {
 		}
 	});
 	ipcMain.handle("import-sound-effects", async (_, kind: unknown) => {
-		if (kind !== "whoosh" && kind !== "click" && kind !== "scroll")
+		if (kind !== "whoosh" && kind !== "click")
 			return { success: false, message: "Choose a sound effect category." };
 		if (importing) return { success: false, message: "A sound import is already in progress." };
 		importing = true;
 		try {
 			const selected = await dialog.showOpenDialog({
-				title:
-					kind === "whoosh"
-						? "Add Whoosh Sounds"
-						: kind === "scroll"
-							? "Add Scroll Sounds"
-							: "Add Mouse Click Sounds",
+				title: kind === "whoosh" ? "Add Whoosh Sounds" : "Add Mouse Click Sounds",
 				filters: [{ name: "Audio Files", extensions: SOUND_EFFECT_EXTENSIONS }],
 				properties: ["openFile", "multiSelections"],
 			});

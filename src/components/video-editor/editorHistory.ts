@@ -8,6 +8,11 @@ import type {
 } from "./types";
 
 export type EditorHistorySnapshot = {
+	settings?: {
+		appearance: Record<string, unknown>;
+		timeline: Record<string, unknown>;
+		aspectRatio: string;
+	};
 	zoomRegions: ZoomRegion[];
 	clipRegions: ClipRegion[];
 	speedRegions: SpeedRegion[];
@@ -82,7 +87,22 @@ export function areEditorHistorySnapshotsEqual(
 	left: EditorHistorySnapshot,
 	right: EditorHistorySnapshot,
 ): boolean {
-	return areDeepEqual(left, right);
+	return areDeepEqual(
+		{
+			...left,
+			selectedZoomId: null,
+			selectedClipId: null,
+			selectedAnnotationId: null,
+			selectedAudioId: null,
+		},
+		{
+			...right,
+			selectedZoomId: null,
+			selectedClipId: null,
+			selectedAnnotationId: null,
+			selectedAudioId: null,
+		},
+	);
 }
 
 export function recordEditorHistorySnapshot(
@@ -91,6 +111,7 @@ export function recordEditorHistorySnapshot(
 	options: {
 		applyingHistory?: boolean;
 		maxEntries?: number;
+		coalesce?: boolean;
 	} = {},
 ): EditorHistoryRecordResult {
 	const clonedSnapshot = cloneEditorHistorySnapshot(snapshot);
@@ -106,10 +127,11 @@ export function recordEditorHistorySnapshot(
 	}
 
 	if (areEditorHistorySnapshotsEqual(stack.current, snapshot)) {
+		stack.current = clonedSnapshot;
 		return "unchanged";
 	}
 
-	stack.past.push(cloneEditorHistorySnapshot(stack.current));
+	if (!options.coalesce) stack.past.push(cloneEditorHistorySnapshot(stack.current));
 	const maxEntries = options.maxEntries ?? MAX_EDITOR_HISTORY_ENTRIES;
 	if (stack.past.length > maxEntries) {
 		stack.past.shift();

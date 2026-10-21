@@ -159,64 +159,6 @@ describe("source preview playback ownership", () => {
 });
 
 describe("zoom overlay preview transport", () => {
-	it("loops scrolling throughout a gesture and auditions it at any paused scrub position", async () => {
-		vi.useFakeTimers();
-		const audio = {
-			src: "",
-			duration: 0.085,
-			currentTime: 0,
-			playbackRate: 1,
-			paused: true,
-			pause: vi.fn(() => {
-				audio.paused = true;
-			}),
-			play: vi.fn(async () => {
-				audio.paused = false;
-			}),
-		};
-		vi.stubGlobal("Audio", function () {
-			return audio;
-		});
-		const render = (time: number) => {
-			harness.index = 0;
-			harness.effects = [];
-			useAudioPreviewSync({
-				audioRegions: [
-					{
-						id: "scroll:a:0",
-						startMs: 1000,
-						endMs: 3000,
-						audioPath: "scroll.wav",
-						volume: 1,
-					},
-				],
-				previewVolume: 1,
-				isPlaying: false,
-				currentTime: time,
-				timelineTime: time,
-				duration: 4,
-				sourcePlaybackRate: 1,
-				previewSourceAudioFallbackPaths: [],
-				sourceAudioFallbackStartDelayMsByPath: {},
-				sourceAudioResourceVersion: 0,
-				isCurrentClipMuted: false,
-				getSourceTrackPreviewGain: () => 1,
-				onSourceFallbackLoadError: vi.fn(),
-			});
-			for (const effect of harness.effects) effect();
-		};
-		render(0);
-		await Promise.resolve();
-		for (const time of [1.2, 1.8, 2.5]) {
-			render(time);
-			await Promise.resolve();
-			expect(audio.paused).toBe(false);
-			expect(audio.currentTime).toBeCloseTo((time - 1) % 0.085);
-			vi.advanceTimersByTime(100);
-			expect(audio.paused).toBe(true);
-		}
-		vi.useRealTimers();
-	});
 	it("starts a late-loaded whoosh, pauses it, and restarts at the right offset after seeking", async () => {
 		const audio = {
 			src: "",

@@ -1,5 +1,5 @@
 export type LocalSoundId = `local:${string}`;
-export type SoundEffectKind = "whoosh" | "click" | "scroll";
+export type SoundEffectKind = "whoosh" | "click";
 export interface CustomSoundEffect {
 	id: LocalSoundId;
 	name: string;
@@ -22,7 +22,7 @@ export function normalizeCustomSoundEffects(raw: unknown): CustomSoundEffect[] {
 				entry.id,
 			) ||
 			ids.has(entry.id) ||
-			(entry.kind !== "whoosh" && entry.kind !== "click" && entry.kind !== "scroll") ||
+			(entry.kind !== "whoosh" && entry.kind !== "click") ||
 			typeof entry.name !== "string" ||
 			!entry.name.trim() ||
 			typeof entry.path !== "string" ||

@@ -88,6 +88,9 @@ export function useEditorProjectController(input: Input) {
 		projectSaveDialogInputRef: input.projectSaveDialogInputRef,
 	});
 	const history = useEditorHistory({
+		appearance: input.appearance,
+		aspectRatio: input.aspectRatio,
+		setAspectRatio: input.setAspectRatio,
 		timeline: input.timeline,
 		nextZoomIdRef: input.nextZoomIdRef,
 		nextClipIdRef: input.nextClipIdRef,

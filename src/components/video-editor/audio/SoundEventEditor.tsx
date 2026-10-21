@@ -31,8 +31,7 @@ export function SoundEventEditor({
 	return (
 		<section className="flex flex-col gap-3" aria-label="Selected sound effect">
 			<h3 className="text-sm font-semibold">
-				{category === "whoosh" ? "Whoosh" : category === "click" ? "Mouse click" : "Scroll"}{" "}
-				event
+				{category === "whoosh" ? "Whoosh" : "Mouse click"} event
 			</h3>
 			<Select
 				value={edit.soundId ?? "inherit"}
@@ -52,11 +51,7 @@ export function SoundEventEditor({
 							</SelectItem>
 						))
 					) : (
-						<SelectItem
-							value={category === "click" ? "default-click" : "default-scroll"}
-						>
-							Default {category} sound
-						</SelectItem>
+						<SelectItem value="default-click">Default {category} sound</SelectItem>
 					)}
 					{settings.customSounds
 						.filter((sound) => sound.kind === category)

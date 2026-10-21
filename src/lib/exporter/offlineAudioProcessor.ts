@@ -137,9 +137,7 @@ export class OfflineAudioProcessor extends AudioMediaProcessor {
 					region.audioPath,
 					// Bundled sound effects are short files served as static assets. Decode them
 					// directly: the streaming demuxer requires byte ranges for raw FLAC.
-					region.id.startsWith("zoom-whoosh:") ||
-						region.id.startsWith("mouse-click:") ||
-						region.id.startsWith("scroll:")
+					region.id.startsWith("zoom-whoosh:") || region.id.startsWith("mouse-click:")
 						? await this.bulkDecodeFromUrl(region.audioPath, OFFLINE_AUDIO_SAMPLE_RATE)
 						: await this.decodeAudioFromUrl(region.audioPath),
 				);
@@ -419,11 +417,7 @@ export class OfflineAudioProcessor extends AudioMediaProcessor {
 			localEndSec = chunkDurationSec;
 		}
 
-		const loop = region.id?.startsWith("scroll:") ?? false;
-		if (loop && buffer.duration > 0) bufferOffsetSec %= buffer.duration;
-		const duration = loop
-			? localEndSec - localStartSec
-			: Math.min(localEndSec - localStartSec, buffer.duration - bufferOffsetSec);
+		const duration = Math.min(localEndSec - localStartSec, buffer.duration - bufferOffsetSec);
 		if (duration <= 0.001) return;
 
 		const gainNode = ctx.createGain();
@@ -433,7 +427,6 @@ export class OfflineAudioProcessor extends AudioMediaProcessor {
 
 		const source = ctx.createBufferSource();
 		source.buffer = buffer;
-		source.loop = loop;
 		source.connect(gainNode);
 		source.start(localStartSec, bufferOffsetSec, duration);
 	}

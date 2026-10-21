@@ -22,8 +22,5 @@ test("separates categories and reveals timing controls only in Advanced", async 
 		page.getByRole("slider", { name: "Mouse click volume", exact: true }),
 	).toBeVisible();
 	await expect(page.getByRole("slider", { name: "Whoosh volume", exact: true })).toHaveCount(0);
-	await page.getByRole("tab", { name: "Scrolling", exact: true }).click();
-	await expect(page.getByRole("spinbutton", { name: "Scroll delay value" })).toBeVisible();
-	await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
-	await expect(page.getByRole("spinbutton", { name: "Scroll delay value" })).toHaveCount(0);
+	await expect(page.getByRole("tab", { name: "Scrolling", exact: true })).toHaveCount(0);
 });

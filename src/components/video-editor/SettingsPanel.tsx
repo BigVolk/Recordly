@@ -908,7 +908,6 @@ export function SettingsPanel({
 	onClipDelete,
 	selectedAudioId,
 	selectedAudioVolume,
-	selectedAudioNormalize,
 	onAudioVolumeChange,
 	onAudioNormalizeChange,
 	onAudioDelete,
@@ -2712,16 +2711,6 @@ export function SettingsPanel({
 					onChange={(v) => onAudioVolumeChange?.(v)}
 					formatValue={(v) => `${Math.round(v * 100)}%`}
 				/>
-				<div className="flex items-center justify-between py-2">
-					<span className="text-xs text-muted-foreground">
-						{tSettings("audio.normalize", "Normalize")}
-					</span>
-					<Switch
-						aria-label={tSettings("audio.normalize", "Normalize")}
-						checked={Boolean(selectedAudioNormalize)}
-						onCheckedChange={(v) => onAudioNormalizeChange?.(v)}
-					/>
-				</div>
 			</section>
 		);
 

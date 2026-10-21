@@ -198,16 +198,6 @@ try {
 		for (let i = 0; i < Math.abs(value / 10); i++)
 			await page.keyboard.press(value < 0 ? "ArrowLeft" : "ArrowRight");
 	}
-	await page.getByRole("tab", { name: "Scrolling", exact: true }).click();
-	await page.getByRole("button", { name: /Scroll sound$/ }).click();
-	await page
-		.getByRole("listbox", { name: "Scroll sound" })
-		.getByRole("option", { name: "No sound" })
-		.click();
-	await page.getByRole("spinbutton", { name: "Scroll delay value" }).fill("-175");
-	await page.getByRole("slider", { name: "Scroll volume" }).focus();
-	await page.keyboard.press("Home");
-	for (let i = 0; i < 45; i++) await page.keyboard.press("ArrowRight");
 	await expect
 		.poll(() =>
 			page.evaluate(
@@ -237,6 +227,11 @@ try {
 		),
 		delayValues,
 	);
+	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
+	const delayInput = page.getByRole("spinbutton", { name: "Small zoom in delay value" });
+	await delayInput.fill("-275");
+	await page.keyboard.press("Control+z");
+	await expect(delayInput).toHaveValue("-150");
 	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
 	await page.evaluate(() => {
 		const play = HTMLMediaElement.prototype.play;
@@ -293,10 +288,6 @@ try {
 	await expect(page.getByRole("slider", { name: "Mouse click volume", exact: true })).toHaveValue(
 		"0.6",
 	);
-	await page.getByRole("tab", { name: "Scrolling", exact: true }).click();
-	await expect(page.getByRole("slider", { name: "Scroll volume" })).toHaveValue("0.45");
-	await expect(page.getByRole("button", { name: /Scroll sound$/ })).toContainText("No sound");
-	await expect(page.getByRole("spinbutton", { name: "Scroll delay value" })).toHaveValue("-175");
 	await page.getByRole("tab", { name: "Whooshes", exact: true }).click();
 	for (const [label, value] of [
 		["Small zoom in delay", -150],
@@ -310,7 +301,7 @@ try {
 	}
 	assert.deepEqual(errors, []);
 	console.log(
-		"Packaged UI smoke passed: desktop bridge, styled text, click/whoosh/scroll sounds, independent volumes and delays restored after app relaunch.",
+		"Packaged UI smoke passed: desktop bridge, styled text, click/whoosh sounds, independent volumes and delays restored after app relaunch.",
 	);
 } finally {
 	await stopApp();

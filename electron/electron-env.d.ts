@@ -689,7 +689,7 @@ interface Window {
 			sounds: import("../src/components/video-editor/audio/customSoundEffects").CustomSoundEffect[];
 			message?: string;
 		}>;
-		importSoundEffects: (kind: "whoosh" | "click" | "scroll") => Promise<{
+		importSoundEffects: (kind: "whoosh" | "click") => Promise<{
 			success: boolean;
 			canceled?: boolean;
 			sounds?: import("../src/components/video-editor/audio/customSoundEffects").CustomSoundEffect[];
@@ -1067,7 +1067,6 @@ interface ProcessedDesktopSource {
 }
 
 interface CursorTelemetryPoint {
-	scrollAmount?: number;
 	timeMs: number;
 	cx: number;
 	cy: number;
@@ -1078,9 +1077,7 @@ interface CursorTelemetryPoint {
 		| "double-click"
 		| "right-click"
 		| "middle-click"
-		| "mouseup"
-		| "scroll-up"
-		| "scroll-down";
+		| "mouseup";
 	cursorType?:
 		| "arrow"
 		| "text"
