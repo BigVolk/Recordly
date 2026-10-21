@@ -1,3 +1,7 @@
+// A transparent PNG keeps the existing image pipeline and project persistence.
+export const TRANSPARENT_WALLPAPER =
+	"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=";
+
 export interface BuiltInWallpaper {
 	id: string;
 	label: string;

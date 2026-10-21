@@ -1,3 +1,4 @@
+import { TRANSPARENT_WALLPAPER } from "@/lib/wallpapers";
 import { SoundEventEditor } from "./audio/SoundEventEditor";
 import { Card, Description, Label, ProgressBar, Radio, RadioGroup } from "@heroui/react";
 import { AnimatePresence, motion } from "motion/react";
@@ -154,7 +155,7 @@ const CLICK_EFFECT_COLOR_OPTIONS = [
 	"#F97316",
 ] as const;
 
-type BackgroundTab = "image" | "video" | "color" | "gradient";
+type BackgroundTab = "image" | "video" | "color" | "gradient" | "transparent";
 function isHexWallpaper(value: string): boolean {
 	return /^#(?:[0-9a-f]{3}){1,2}$/i.test(value);
 }
@@ -173,6 +174,7 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 function getBackgroundTabForWallpaper(value: string): BackgroundTab {
+	if (value === TRANSPARENT_WALLPAPER) return "transparent";
 	if (GRADIENTS.includes(value)) {
 		return "gradient";
 	}
@@ -1225,7 +1227,7 @@ export function SettingsPanel({
 	}, [selected]);
 
 	useEffect(() => {
-		if (selected.startsWith("data:image")) {
+		if (selected.startsWith("data:image") && selected !== TRANSPARENT_WALLPAPER) {
 			setCustomImages((prev) => (prev.includes(selected) ? prev : [selected, ...prev]));
 			return;
 		}
@@ -1551,11 +1553,11 @@ export function SettingsPanel({
 
 		const file = files[0];
 
-		// Validate file type - only allow JPG/JPEG
-		const validTypes = ["image/jpeg", "image/jpg"];
+		// Keep the original PNG bytes so uploaded alpha is preserved.
+		const validTypes = ["image/jpeg", "image/jpg", "image/png"];
 		if (!validTypes.includes(file.type)) {
 			toast.error(tSettings("background.uploadError"), {
-				description: tSettings("background.uploadErrorDescription"),
+				description: "Choose a PNG or JPEG image.",
 			});
 			event.target.value = "";
 			return;
@@ -1648,10 +1650,11 @@ export function SettingsPanel({
 					onValueChange={(value) => {
 						if (value) {
 							setBackgroundTab(value as typeof backgroundTab);
+							if (value === "transparent") onWallpaperChange(TRANSPARENT_WALLPAPER);
 						}
 					}}
 					aria-label={tSettings("background.title", "Background type")}
-					className="grid w-full grid-cols-4 gap-2"
+					className="grid w-full grid-cols-3 gap-2"
 				>
 					{(
 						[
@@ -1659,6 +1662,7 @@ export function SettingsPanel({
 							{ value: "video", label: tSettings("background.video", "Video") },
 							{ value: "color", label: tSettings("background.color") },
 							{ value: "gradient", label: tSettings("background.gradient") },
+							{ value: "transparent", label: "Transparent" },
 						] as const
 					).map((option) => (
 						<ChoiceItem
@@ -1675,7 +1679,7 @@ export function SettingsPanel({
 					type="file"
 					ref={fileInputRef}
 					onChange={handleImageUpload}
-					accept=".jpg,.jpeg,image/jpeg"
+					accept=".png,.jpg,.jpeg,image/png,image/jpeg"
 					className="hidden"
 				/>
 				<div className="grid pt-4 overflow-hidden" data-testid="background-slider">
@@ -1684,7 +1688,21 @@ export function SettingsPanel({
 						data-background-panel={backgroundTab}
 						className="editor-section-enter min-w-0"
 					>
-						{backgroundTab === "image" || backgroundTab === "video" ? (
+						{backgroundTab === "transparent" ? (
+							<div className="space-y-3" aria-label="Transparent PNG background">
+								<div
+									className="h-20 rounded-lg border border-separator"
+									style={{
+										backgroundImage:
+											"conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0)",
+										backgroundSize: "20px 20px",
+									}}
+								/>
+								<p className="text-xs text-muted-foreground">
+									Clear PNG background. MP4 exports remain opaque.
+								</p>
+							</div>
+						) : backgroundTab === "image" || backgroundTab === "video" ? (
 							<>
 								<WallpaperGrid
 									addLabel={

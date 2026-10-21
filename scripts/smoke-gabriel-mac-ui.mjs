@@ -270,9 +270,25 @@ try {
 		JSON.stringify(style),
 	);
 	assert.deepEqual(errors, []);
+	await page.getByRole("radio", { name: "Scene", exact: true }).click();
+	await page.getByRole("row", { name: "Transparent", exact: true }).click();
+	await expect
+		.poll(() =>
+			page.evaluate(
+				() => window.electronAPI.getAppSetting("recordly.editor.preferences")?.wallpaper,
+			),
+		)
+		.toMatch(/^data:image\/png;base64,/);
 	await page.screenshot({ path: path.join(root, ".tmp/gabriel-packaged-ui.png") });
 	await stopApp();
 	page = await launchApp();
+	await expect
+		.poll(() =>
+			page.evaluate(
+				() => window.electronAPI.getAppSetting("recordly.editor.preferences")?.wallpaper,
+			),
+		)
+		.toMatch(/^data:image\/png;base64,/);
 	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	await page.getByRole("switch", { name: "Advanced settings", exact: true }).press("Space");
 	await page.getByRole("tab", { name: "Mouse Clicks", exact: true }).click();
