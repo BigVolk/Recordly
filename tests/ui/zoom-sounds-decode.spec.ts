@@ -4,7 +4,7 @@ import { installDesktopBridge } from "./bridge";
 test("decodes bundled sounds for export", async ({ page }) => {
 	await installDesktopBridge(page);
 	await page.goto("/?windowType=editor");
-	await page.getByRole("radio", { name: "Settings", exact: true }).waitFor();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).waitFor();
 	const results = await page.evaluate(async () => {
 		// @ts-expect-error Vite imports the source module in this browser check.
 		const { AudioMediaProcessor } = await import("/src/lib/exporter/audioMediaProcessor.ts");

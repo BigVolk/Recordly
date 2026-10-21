@@ -268,6 +268,9 @@ export function useTimelineEditingController(input: Input) {
 		t: input.t,
 	});
 	const audioCommands = useAudioRegionCommands({
+		soundEffectRegions: [...zoomWhooshRegions, ...mouseClickRegions, ...scrollSoundRegions],
+		soundSettings: input.appearance.zoomSoundEffects,
+		onSoundSettingsChange: input.appearance.setZoomSoundEffects,
 		setSelectedClipId: timeline.setSelectedClipId,
 		setAudioRegions: timeline.setAudioRegions,
 		selectedAudioId: timeline.selectedAudioId,
@@ -289,6 +292,7 @@ export function useTimelineEditingController(input: Input) {
 	});
 
 	useEditorGlobalInteractions({
+		soundEffectRegions: audioCommands.soundEffectRegions,
 		timeline,
 		videoPlaybackRef: input.videoPlaybackRef,
 		shortcuts: input.shortcuts,

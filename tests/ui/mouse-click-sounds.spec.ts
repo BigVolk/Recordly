@@ -14,8 +14,7 @@ test("click and whoosh sliders apply independently and preview the click asset",
 	});
 	await page.goto("/?windowType=editor");
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
-	await page.getByRole("radio", { name: "Settings", exact: true }).click();
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	const click = page.getByRole("slider", { name: "Mouse click volume", exact: true });
 	const whoosh = page.getByRole("slider", { name: "Whoosh volume", exact: true });
 	await click.focus();
@@ -46,8 +45,7 @@ test("click and whoosh sliders apply independently and preview the click asset",
 	).toBe(1);
 	await page.reload();
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
-	await page.getByRole("radio", { name: "Settings", exact: true }).click();
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	await expect(whoosh).toHaveValue("0");
 	await expect(click).toHaveValue("1");
 	await click.focus();

@@ -97,7 +97,9 @@ async function launchApp() {
 	const context = browser.contexts()[0];
 	await expect.poll(() => context.pages().length, { timeout: 20000 }).toBeGreaterThan(0);
 	const page = context.pages()[0];
-	await page.getByRole("radio", { name: "Settings", exact: true }).waitFor({ timeout: 20000 });
+	await page
+		.getByRole("radio", { name: "Sound Effects", exact: true })
+		.waitFor({ timeout: 20000 });
 	return page;
 }
 
@@ -127,8 +129,7 @@ try {
 		})
 		.toBe("function");
 	assert.equal(await page.evaluate(() => window.electronAPI.getPlatform()), "darwin");
-	await page.getByRole("radio", { name: "Settings", exact: true }).click({ timeout: 20000 });
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click({ timeout: 20000 });
 	assert.equal(
 		(await page.evaluate(() => window.electronAPI.getSoundEffectLibrary())).sounds[0].name,
 		"Smoke custom click",
@@ -176,12 +177,12 @@ try {
 		for (let i = 0; i < Math.abs(value / 10); i++)
 			await page.keyboard.press(value < 0 ? "ArrowLeft" : "ArrowRight");
 	}
-	await page.getByRole("button", { name: /Small scroll up sound$/ }).click();
+	await page.getByRole("button", { name: /Scroll sound$/ }).click();
 	await page
-		.getByRole("listbox", { name: "Small scroll up sound" })
+		.getByRole("listbox", { name: "Scroll sound" })
 		.getByRole("option", { name: "No sound" })
 		.click();
-	await page.getByRole("spinbutton", { name: "Large scroll down delay value" }).fill("-175");
+	await page.getByRole("spinbutton", { name: "Scroll delay value" }).fill("-175");
 	await page.getByRole("slider", { name: "Scroll volume" }).focus();
 	await page.keyboard.press("Home");
 	for (let i = 0; i < 45; i++) await page.keyboard.press("ArrowRight");
@@ -254,8 +255,7 @@ try {
 	await page.screenshot({ path: path.join(root, ".tmp/gabriel-packaged-ui.png") });
 	await stopApp();
 	page = await launchApp();
-	await page.getByRole("radio", { name: "Settings", exact: true }).click();
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	await expect(page.locator('button[aria-label="Mouse click sound"]')).toContainText(
 		"Smoke custom click",
 	);
@@ -267,12 +267,8 @@ try {
 		"0.6",
 	);
 	await expect(page.getByRole("slider", { name: "Scroll volume" })).toHaveValue("0.45");
-	await expect(page.getByRole("button", { name: /Small scroll up sound$/ })).toContainText(
-		"No sound",
-	);
-	await expect(
-		page.getByRole("spinbutton", { name: "Large scroll down delay value" }),
-	).toHaveValue("-175");
+	await expect(page.getByRole("button", { name: /Scroll sound$/ })).toContainText("No sound");
+	await expect(page.getByRole("spinbutton", { name: "Scroll delay value" })).toHaveValue("-175");
 	for (const [label, value] of [
 		["Small zoom in delay", -150],
 		["Small zoom out delay", 200],

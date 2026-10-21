@@ -1,3 +1,4 @@
+import { applySoundEventOverrides } from "./soundEvents";
 import scrollUrl from "@/assets/sounds/scroll.wav?url";
 import {
 	getClipSourceEndMs,
@@ -68,10 +69,7 @@ export function buildScrollSoundRegions(
 			// A trackpad produces many wheel packets per gesture. Keep the first packet
 			// exactly aligned while avoiding a loud stack of overlapping samples.
 			if (eventAt - lastSoundAt < 45) continue;
-			const size =
-				(event.scrollAmount ?? 1) >= settings.scrollLargeThreshold ? "large" : "small";
-			const direction = event.interactionType === "scroll-up" ? "Up" : "Down";
-			const slot = `${size}Scroll${direction}` as ScrollSoundSlot;
+			const slot: ScrollSoundSlot = "smallScrollUp";
 			const sound = getScrollSoundAsset(settings, slot);
 			if (!sound) continue;
 			lastSoundAt = eventAt;
@@ -93,5 +91,7 @@ export function buildScrollSoundRegions(
 			});
 		}
 	}
-	return regions.sort((a, b) => a.startMs - b.startMs);
+	return applySoundEventOverrides(regions, settings, timelineDurationMs).sort(
+		(a, b) => a.startMs - b.startMs,
+	);
 }

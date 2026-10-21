@@ -92,7 +92,7 @@ export function EditorTimelinePanel(props: Props) {
 				onClipSpanChange={clipCommands.handleClipSpanChange}
 				selectedClipId={timeline.selectedClipId}
 				onSelectClip={clipCommands.handleSelectClip}
-				audioRegions={timeline.audioRegions}
+				audioRegions={[...timeline.audioRegions, ...audioCommands.soundEffectRegions]}
 				onAudioAdded={audioCommands.handleAudioAdded}
 				onAudioSpanChange={audioCommands.handleAudioSpanChange}
 				onAudioDelete={audioCommands.handleAudioDelete}

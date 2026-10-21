@@ -6,6 +6,7 @@ import type { VideoPlaybackRef } from "../VideoPlayback";
 
 type Input = {
 	timeline: ReturnType<typeof useTimelineState>;
+	soundEffectRegions?: { id: string }[];
 	videoPlaybackRef: RefObject<VideoPlaybackRef | null>;
 	shortcuts: ReturnType<typeof useShortcuts>["shortcuts"];
 	isMac: boolean;
@@ -15,6 +16,7 @@ type Input = {
 };
 
 export function useEditorGlobalInteractions({
+	soundEffectRegions = [],
 	timeline,
 	videoPlaybackRef,
 	shortcuts,
@@ -114,11 +116,18 @@ export function useEditorGlobalInteractions({
 	useEffect(() => {
 		if (
 			timeline.selectedAudioId &&
-			!timeline.audioRegions.some(({ id }) => id === timeline.selectedAudioId)
+			![...timeline.audioRegions, ...soundEffectRegions].some(
+				({ id }) => id === timeline.selectedAudioId,
+			)
 		) {
 			timeline.setSelectedAudioId(null);
 		}
-	}, [timeline.selectedAudioId, timeline.audioRegions, timeline.setSelectedAudioId]);
+	}, [
+		timeline.selectedAudioId,
+		timeline.audioRegions,
+		timeline.setSelectedAudioId,
+		soundEffectRegions,
+	]);
 	useEffect(() => {
 		if (
 			timeline.selectedCaptionId &&

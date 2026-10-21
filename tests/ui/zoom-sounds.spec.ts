@@ -17,8 +17,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 	});
 	await page.goto("/?windowType=editor");
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
-	await page.getByRole("radio", { name: "Settings", exact: true }).click();
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 
 	async function choose(label: string, sound: string) {
 		await page.getByRole("button", { name: new RegExp(`${label}$`) }).click();
@@ -93,8 +92,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 
 	await page.reload();
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
-	await page.getByRole("radio", { name: "Settings", exact: true }).click();
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(
 		"Better whoosh",
 	);
@@ -112,7 +110,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 	await page.screenshot({ path: "test-results/zoom-sounds.png", animations: "disabled" });
 
 	await page.getByRole("button", { name: "Preview large zoom in sound", exact: true }).click();
-	await page.getByRole("row", { name: "Motion", exact: true }).click();
+	await page.getByRole("radio", { name: "Settings", exact: true }).click();
 	await expect
 		.poll(() =>
 			page.evaluate(
@@ -122,7 +120,7 @@ test("chooses independent zoom sounds, previews FLAC, and persists assignments",
 			),
 		)
 		.toBe(true);
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	await page.getByRole("button", { name: "Reset sounds", exact: true }).click();
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(
 		"Short & dry 1",

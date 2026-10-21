@@ -31,8 +31,7 @@ test("imports custom whoosh and click choices and saves them without Apply", asy
 			}),
 		});
 	});
-	await page.getByRole("radio", { name: "Settings", exact: true }).click();
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	await page.getByRole("button", { name: "Add whoosh files…" }).click();
 	await page.getByRole("button", { name: /Small zoom in sound$/ }).click();
 	await page
@@ -69,8 +68,7 @@ test("imports custom whoosh and click choices and saves them without Apply", asy
 	await expect(page.getByRole("button", { name: "Apply changes" })).toHaveCount(0);
 	await page.reload();
 	await page.getByRole("button", { name: "Clip · 0.0s – 6.0s", exact: true }).waitFor();
-	await page.getByRole("radio", { name: "Settings", exact: true }).click();
-	await page.getByRole("row", { name: "Sound Effects", exact: true }).click();
+	await page.getByRole("radio", { name: "Sound Effects", exact: true }).click();
 	await expect(page.getByRole("button", { name: /Small zoom in sound$/ })).toContainText(
 		"Imported air",
 	);

@@ -30,6 +30,9 @@ export function getAnnotationLabel(region: AnnotationRegion): string {
 }
 
 export function getAudioLabel(region: AudioRegion): string {
+	if (region.id.startsWith("zoom-whoosh:")) return "Whoosh";
+	if (region.id.startsWith("mouse-click:")) return "Mouse click";
+	if (region.id.startsWith("scroll:")) return "Scroll";
 	return (
 		region.audioPath
 			.split(/[\\/]/)

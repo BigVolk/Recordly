@@ -1,8 +1,13 @@
+import { soundEventCategory } from "../audio/soundEvents";
+import type { ZoomSoundEffects, SoundEventOverride } from "../audio/zoomSoundSettings";
 import type { Span } from "dnd-timeline";
 import { type Dispatch, type MutableRefObject, type SetStateAction, useCallback } from "react";
 import type { AudioRegion, EditorEffectSection } from "../types";
 
 interface UseAudioRegionCommandsParams {
+	soundEffectRegions?: AudioRegion[];
+	soundSettings?: ZoomSoundEffects;
+	onSoundSettingsChange?: (settings: ZoomSoundEffects) => void;
 	setSelectedClipId: Dispatch<SetStateAction<string | null>>;
 	setAudioRegions: Dispatch<SetStateAction<AudioRegion[]>>;
 	selectedAudioId: string | null;
@@ -15,6 +20,9 @@ interface UseAudioRegionCommandsParams {
 }
 
 export function useAudioRegionCommands({
+	soundEffectRegions = [],
+	soundSettings,
+	onSoundSettingsChange,
 	setSelectedClipId,
 	setAudioRegions,
 	selectedAudioId,
@@ -25,6 +33,19 @@ export function useAudioRegionCommands({
 	setActiveEffectSection,
 	nextAudioIdRef,
 }: UseAudioRegionCommandsParams) {
+	const updateSoundEvent = useCallback(
+		(id: string, patch: SoundEventOverride) => {
+			if (!soundSettings || !onSoundSettingsChange) return;
+			onSoundSettingsChange({
+				...soundSettings,
+				events: {
+					...soundSettings.events,
+					[id]: { ...soundSettings.events[id], ...patch },
+				},
+			});
+		},
+		[soundSettings, onSoundSettingsChange],
+	);
 	const handleSelectAudio = useCallback(
 		(id: string | null) => {
 			setSelectedAudioId(id);
@@ -80,6 +101,17 @@ export function useAudioRegionCommands({
 
 	const handleAudioSpanChange = useCallback(
 		(id: string, span: Span, trackIndex?: number) => {
+			if (soundEventCategory(id)) {
+				const region = soundEffectRegions.find((item) => item.id === id);
+				if (region)
+					updateSoundEvent(id, {
+						delayMs:
+							(soundSettings?.events[id]?.delayMs ?? 0) + span.start - region.startMs,
+						durationMs: Math.max(1, span.end - span.start),
+						...(trackIndex === undefined ? {} : { trackIndex }),
+					});
+				return;
+			}
 			const normalizedTrackIndex =
 				typeof trackIndex === "number" && Number.isFinite(trackIndex)
 					? Math.max(0, Math.floor(trackIndex))
@@ -99,12 +131,16 @@ export function useAudioRegionCommands({
 				),
 			);
 		},
-		[setAudioRegions],
+		[setAudioRegions, soundEffectRegions, soundSettings, updateSoundEvent],
 	);
 
 	const handleAudioVolumeChange = useCallback(
 		(volume: number) => {
 			if (!selectedAudioId || !Number.isFinite(volume)) return;
+			if (soundEventCategory(selectedAudioId)) {
+				updateSoundEvent(selectedAudioId, { volume });
+				return;
+			}
 			const nextVolume = Math.max(0, Math.min(1, volume));
 			setAudioRegions((current) =>
 				current.map((region) =>
@@ -112,15 +148,20 @@ export function useAudioRegionCommands({
 				),
 			);
 		},
-		[selectedAudioId, setAudioRegions],
+		[selectedAudioId, setAudioRegions, updateSoundEvent],
 	);
 
 	const handleAudioDelete = useCallback(
 		(id: string) => {
+			if (soundEventCategory(id)) {
+				updateSoundEvent(id, { deleted: true });
+				setSelectedAudioId(null);
+				return;
+			}
 			setAudioRegions((current) => current.filter((region) => region.id !== id));
 			if (selectedAudioId === id) setSelectedAudioId(null);
 		},
-		[selectedAudioId, setAudioRegions, setSelectedAudioId],
+		[selectedAudioId, setAudioRegions, setSelectedAudioId, updateSoundEvent],
 	);
 
 	const handleAudioNormalizeChange = useCallback(
@@ -136,6 +177,7 @@ export function useAudioRegionCommands({
 	);
 
 	return {
+		soundEffectRegions,
 		handleSelectAudio,
 		handleAudioAdded,
 		handleAudioSpanChange,

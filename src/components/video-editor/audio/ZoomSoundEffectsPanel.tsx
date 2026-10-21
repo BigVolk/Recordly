@@ -34,10 +34,7 @@ import {
 } from "./zoomSoundSettings";
 
 const scrollSlots: { slot: ScrollSoundSlot; label: string }[] = [
-	{ slot: "smallScrollUp", label: "Small scroll up" },
-	{ slot: "smallScrollDown", label: "Small scroll down" },
-	{ slot: "largeScrollUp", label: "Large scroll up" },
-	{ slot: "largeScrollDown", label: "Large scroll down" },
+	{ slot: "smallScrollUp", label: "Scroll" },
 ];
 
 type SoundSlot = ZoomSoundSlot;
@@ -152,6 +149,10 @@ function ZoomSoundEffectsEditor({
 							...DEFAULT_ZOOM_SOUND_EFFECTS,
 							customSounds: settings.customSounds,
 							mouseClickSound: settings.mouseClickSound,
+							scrollSounds: settings.scrollSounds,
+							scrollDelaysMs: settings.scrollDelaysMs,
+							scrollVolume: settings.scrollVolume,
+							events: settings.events,
 						})
 					}
 				>
@@ -574,17 +575,6 @@ export function ZoomSoundEffectsPanel({
 					step={0.01}
 					onChange={(value) => changeSettings({ ...settings, scrollVolume: value })}
 					formatValue={(value) => `${Math.round(value * 100)}%`}
-				/>
-				<SliderControl
-					label="Large scroll starts at"
-					value={settings.scrollLargeThreshold}
-					min={1}
-					max={20}
-					step={1}
-					onChange={(value) =>
-						changeSettings({ ...settings, scrollLargeThreshold: value })
-					}
-					formatValue={(value) => `${value} ticks`}
 				/>
 				{scrollSlots.map(({ slot, label }) => (
 					<div

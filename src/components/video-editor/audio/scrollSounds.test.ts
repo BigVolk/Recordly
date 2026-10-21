@@ -25,18 +25,18 @@ describe("recorded scroll sounds", () => {
 				...DEFAULT_ZOOM_SOUND_EFFECTS,
 				scrollDelaysMs: {
 					...DEFAULT_ZOOM_SOUND_EFFECTS.scrollDelaysMs,
-					largeScrollDown: -25,
+					smallScrollUp: -25,
 				},
 			},
 		);
 		expect(regions.map(({ startMs, volume }) => [startMs, volume])).toEqual([
-			[1200, 0.3],
+			[1175, 0.3],
 			[1375, 0.3],
 		]);
 		expect(regions).toHaveLength(2);
 	});
 
-	it("respects per-direction sound choice and mute", () => {
+	it("respects the shared scroll sound choice and mute", () => {
 		const event = [{ timeMs: 100, cx: 0.5, cy: 0.5, interactionType: "scroll-up" as const }];
 		expect(
 			buildScrollSoundRegions(event, [], 1000, {

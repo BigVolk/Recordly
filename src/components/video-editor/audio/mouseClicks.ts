@@ -1,3 +1,4 @@
+import { applySoundEventOverrides } from "./soundEvents";
 import {
 	type AudioRegion,
 	type ClipRegion,
@@ -28,7 +29,8 @@ export function buildMouseClickRegions(
 		? Math.max(0, Math.min(1, configuredVolume))
 		: DEFAULT_MOUSE_CLICK_VOLUME;
 	if (volume === 0) return [];
-	const sound = getMouseClickSoundAsset(normalizeZoomSoundEffects(soundSettings));
+	const settings = normalizeZoomSoundEffects(soundSettings);
+	const sound = getMouseClickSoundAsset(settings);
 	if (!sound) return [];
 	const clickTimes = [
 		...new Set(
@@ -69,5 +71,7 @@ export function buildMouseClickRegions(
 			});
 		}
 	}
-	return regions.sort((a, b) => a.startMs - b.startMs);
+	return applySoundEventOverrides(regions, settings, timelineDurationMs).sort(
+		(a, b) => a.startMs - b.startMs,
+	);
 }

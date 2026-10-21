@@ -1,3 +1,4 @@
+import { SoundEventEditor } from "./audio/SoundEventEditor";
 import { Card, Description, Label, ProgressBar, Radio, RadioGroup } from "@heroui/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -2267,11 +2268,7 @@ export function SettingsPanel({
 	const effectSectionContent = (() => {
 		const settingsSectionContent = (
 			<SettingsSections
-				categories={
-					advanced
-						? ["general", "motion", "sounds", "advanced"]
-						: ["general", "motion", "sounds"]
-				}
+				categories={advanced ? ["general", "motion", "advanced"] : ["general", "motion"]}
 			>
 				<SettingsCategory category="general">
 					{onShowOnboarding && (
@@ -2350,16 +2347,7 @@ export function SettingsPanel({
 						</section>
 					)}
 				</SettingsCategory>
-				<SettingsCategory category="sounds">
-					<ZoomSoundEffectsPanel
-						settings={zoomSoundEffects}
-						onChange={(settings) => onZoomSoundEffectsChange?.(settings)}
-						mouseClickVolume={mouseClickVolume}
-						onMouseClickVolumeChange={(volume) => onMouseClickVolumeChange?.(volume)}
-						volume={zoomWhooshVolume}
-						onVolumeChange={(volume) => onZoomWhooshVolumeChange?.(volume)}
-					/>
-				</SettingsCategory>
+
 				<SettingsCategory category="motion">
 					<section className="flex flex-col gap-6">
 						<SettingsRow
@@ -2691,6 +2679,14 @@ export function SettingsPanel({
 
 		const audioSectionContent = (
 			<section className="flex flex-col gap-3">
+				{selectedAudioId && (
+					<SoundEventEditor
+						key={selectedAudioId}
+						id={selectedAudioId}
+						settings={zoomSoundEffects}
+						onChange={(settings) => onZoomSoundEffectsChange?.(settings)}
+					/>
+				)}
 				<div className="flex items-center justify-between gap-3">
 					<SectionLabel>{tSettings("audio.volumeTitle", "Audio")}</SectionLabel>
 					<Button
@@ -2799,6 +2795,17 @@ export function SettingsPanel({
 		);
 
 		switch (activeEffectSection) {
+			case "sounds":
+				return (
+					<ZoomSoundEffectsPanel
+						settings={zoomSoundEffects}
+						onChange={(settings) => onZoomSoundEffectsChange?.(settings)}
+						mouseClickVolume={mouseClickVolume}
+						onMouseClickVolumeChange={(volume) => onMouseClickVolumeChange?.(volume)}
+						volume={zoomWhooshVolume}
+						onVolumeChange={(volume) => onZoomWhooshVolumeChange?.(volume)}
+					/>
+				);
 			case "settings":
 				return settingsSectionContent;
 			case "scene":

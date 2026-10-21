@@ -1,3 +1,4 @@
+import { applySoundEventOverrides } from "./soundEvents";
 import type { AudioRegion, ZoomRegion } from "../types";
 import { DEFAULT_ZOOM_WHOOSH_VOLUME, ZOOM_DEPTH_SCALES } from "../types";
 import {
@@ -106,5 +107,7 @@ export function buildZoomWhooshRegions(
 			}
 		}
 	}
-	return result.sort((a, b) => a.startMs - b.startMs);
+	return applySoundEventOverrides(result, settings, timelineDurationMs).sort(
+		(a, b) => a.startMs - b.startMs,
+	);
 }

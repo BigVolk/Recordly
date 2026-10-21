@@ -275,7 +275,9 @@ export default function Item({
 			aria-label={
 				isClip
 					? `Clip${clipSpeedLabel ? ` ${clipSpeedLabel}` : ""} · ${timeLabel}`
-					: undefined
+					: variant === "audio" && typeof children === "string"
+						? `${children} · ${timeLabel}`
+						: undefined
 			}
 			onPointerDownCapture={handleSelect}
 			onDoubleClick={(event) => {

@@ -68,7 +68,16 @@ export type ScrollSoundSlot =
 export type ZoomSoundSize = "small" | "large";
 export type ZoomSoundSlot = "smallZoomIn" | "smallZoomOut" | "largeZoomIn" | "largeZoomOut";
 export const MAX_ZOOM_SOUND_DELAY_MS = 2000;
+export type SoundEventOverride = {
+	soundId?: string;
+	volume?: number;
+	delayMs?: number;
+	deleted?: boolean;
+	trackIndex?: number;
+	durationMs?: number;
+};
 export interface ZoomSoundEffects {
+	events: Record<string, SoundEventOverride>;
 	customSounds: CustomSoundEffect[];
 	mouseClickSound: MouseClickSoundChoice;
 	scrollSounds: Record<ScrollSoundSlot, ScrollSoundChoice>;
@@ -84,6 +93,7 @@ export interface ZoomSoundEffects {
 }
 
 export const DEFAULT_ZOOM_SOUND_EFFECTS: ZoomSoundEffects = {
+	events: {},
 	customSounds: [],
 	mouseClickSound: "default-click",
 	scrollSounds: {
@@ -152,6 +162,37 @@ export function normalizeZoomSoundEffects(candidate: unknown): ZoomSoundEffects 
 			: 0;
 	}
 	return {
+		events: Object.fromEntries(
+			Object.entries(raw.events ?? {})
+				.slice(0, 50000)
+				.filter(
+					([id, value]) =>
+						/^(zoom-whoosh|mouse-click|scroll):/.test(id) &&
+						value &&
+						typeof value === "object",
+				)
+				.map(([id, value]) => [
+					id,
+					{
+						...(typeof value.soundId === "string" ? { soundId: value.soundId } : {}),
+						...(typeof value.volume === "number" && Number.isFinite(value.volume)
+							? { volume: Math.max(0, Math.min(1, value.volume)) }
+							: {}),
+						...(typeof value.delayMs === "number" && Number.isFinite(value.delayMs)
+							? { delayMs: Math.max(-60000, Math.min(60000, value.delayMs)) }
+							: {}),
+						...(typeof value.durationMs === "number" &&
+						Number.isFinite(value.durationMs)
+							? { durationMs: Math.max(1, value.durationMs) }
+							: {}),
+						...(value.deleted === true ? { deleted: true } : {}),
+						...(typeof value.trackIndex === "number" &&
+						Number.isFinite(value.trackIndex)
+							? { trackIndex: Math.max(0, Math.floor(value.trackIndex)) }
+							: {}),
+					},
+				]),
+		),
 		customSounds,
 		scrollSounds,
 		scrollDelaysMs,

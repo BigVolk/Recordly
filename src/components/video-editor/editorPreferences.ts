@@ -343,7 +343,7 @@ function normalizeEditorControls(
 		zoomMotionBlurTuning: normalized.zoomMotionBlurTuning,
 		zoomWhooshVolume: normalized.zoomWhooshVolume,
 		mouseClickVolume: normalized.mouseClickVolume,
-		zoomSoundEffects: normalized.zoomSoundEffects,
+		zoomSoundEffects: { ...normalized.zoomSoundEffects, events: {} },
 		connectZooms: normalized.connectZooms,
 		zoomInDurationMs: normalized.zoomInDurationMs,
 		zoomInOverlapMs: normalized.zoomInOverlapMs,

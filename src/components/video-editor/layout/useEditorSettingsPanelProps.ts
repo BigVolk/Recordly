@@ -72,7 +72,7 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 	const selectedClip = timeline.clipRegions.find(
 		(region) => region.id === timeline.selectedClipId,
 	);
-	const selectedAudio = timeline.audioRegions.find(
+	const selectedAudio = [...timeline.audioRegions, ...audioCommands.soundEffectRegions].find(
 		(region) => region.id === timeline.selectedAudioId,
 	);
 
